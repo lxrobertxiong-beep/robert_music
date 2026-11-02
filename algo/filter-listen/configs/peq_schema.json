@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/oss-ai-filter-listen/peq_schema.json",
+  "title": "PortablePEQ",
+  "description": "Portable parametric EQ cascade. Maps to JieLi music_eq / post_eq without vendor libs. SPDX-License-Identifier: Apache-2.0",
+  "type": "object",
+  "required": ["sample_rate", "bands"],
+  "properties": {
+    "name": { "type": "string" },
+    "sample_rate": { "type": "number", "exclusiveMinimum": 0, "default": 48000 },
+    "preamp_db": { "type": "number", "default": 0.0 },
+    "bands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fc", "Q", "gain", "type"],
+        "properties": {
+          "fc": { "type": "number", "exclusiveMinimum": 0, "description": "Center/corner frequency Hz" },
+          "Q": { "type": "number", "exclusiveMinimum": 0, "description": "Quality factor" },
+          "gain": { "type": "number", "description": "Gain in dB" },
+          "type": {
+            "type": "string",
+            "enum": ["peaking", "lowshelf", "highshelf", "lowpass", "highpass"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "target": { "type": "string" },
+        "source_fr": { "type": "string" },
+        "generator": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": true
+}

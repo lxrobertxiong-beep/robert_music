@@ -24,7 +24,7 @@ _JOBS: dict[str, dict] = {}
 # Hard mapping (must stay aligned with JOB_ENTRYPOINT_MAP.md)
 ENTRYPOINT_MAP = {
     ("export_peq", "filter-listen"): {
-        "workdir": "/workspace/oss-ai-filter-listen",
+        "workdir": "algo/filter-listen",
         "script": "scripts/generate_peq_from_fr.py",
         "interpreter": "python3",
         "follow_on": [

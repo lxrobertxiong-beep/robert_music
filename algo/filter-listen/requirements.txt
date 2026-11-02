@@ -1,0 +1,11 @@
+# Optional extras for a later numeric demo. The skeleton and P0 unit tests
+# use the Python standard library only. Leave these commented so
+# `pip install -r requirements-dev.txt` (ruff + pytest) stays unchanged.
+#
+# numpy>=1.22
+# scipy>=1.9
+# soundfile>=0.12
+
+# Optional: AutoEq (MIT). Do NOT vendor the AutoEq repository.
+#   pip install autoeq
+# autoeq>=2.0

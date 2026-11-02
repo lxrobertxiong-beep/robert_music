@@ -66,7 +66,7 @@ paths:
                   value:
                     id: filter-listen
                     display_name: AI 滤波 / 听感补偿（PEQ）
-                    local_path: /workspace/oss-ai-filter-listen/
+                    local_path: algo/filter-listen/
                     license:
                       spdx: Apache-2.0
                     entrypoints:
@@ -175,7 +175,7 @@ paths:
                       target: harman_like
                       output: /tmp/peq.json
                     resolved_entrypoint:
-                      workdir: /workspace/oss-ai-filter-listen
+                      workdir: algo/filter-listen
                       command:
                         - python3
                         - scripts/generate_peq_from_fr.py

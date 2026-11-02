@@ -19,5 +19,5 @@ jobs:
           python-version: "3.11"
       - name: Install ruff
         run: pip install -r requirements-dev.txt
-      - name: Ruff check (control + tests + smoke)
-        run: ruff check control tests smoke
+      - name: Ruff check (control + tests + smoke + algo)
+        run: ruff check control tests smoke algo

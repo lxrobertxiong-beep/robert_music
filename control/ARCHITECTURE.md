@@ -1,7 +1,7 @@
 # 音频算法调控平台 · 架构底稿（本地）
 
 > **性质**：本地纸面草案，落在 `/workspace/control-platform/`。  
-> **状态**：本地 stub 可用；**远程仓尚未创建**（纸面目标名已钉死）；未推送任何 remote。  
+> **状态**：本地 stub 可用。公开仓 `lxrobertxiong-beep/robert_music` 已含 `control/` 与 `algo/filter-listen/`。`call-nr` 仍为盒内路径。  
 > **原则**：执行用户音频算法指令；可挂接算法插件与开放平台；**不发明指标、不宣称榜单结果**。  
 > **日期**：2026-11-02（Asia/Shanghai）  
 > **裁定**：UI=**C**；公开仓 `lxrobertxiong-beep/robert_music`（同仓含 `control/`）；评测仓 `lxrobertxiong-beep/audio-algo-eval`；许可证 **Apache-2.0 + DCO**。详见 `DECISIONS.md`。
@@ -63,7 +63,7 @@
 | 插件 id（草案） | 本地路径 | 首批能力 |
 |-----------------|----------|----------|
 | `call-nr` | `/workspace/m1-call-nr/` | 通话上行 NS：RNNoise@v0.2、DeepFilterNet3@v0.5.6（及桌面对照脚本） |
-| `filter-listen` | `/workspace/oss-ai-filter-listen/` | 48 kHz / 10 ms 图；FR→PEQ JSON；PEQ→WAV |
+| `filter-listen` | `algo/filter-listen/` | 48 kHz / 10 ms 图；FR→PEQ JSON；PEQ→WAV |
 
 真实入口以仓库内脚本为准（见 §4 与 `plugin-registry.example.json`）。
 
@@ -96,7 +96,7 @@
 
 | 面 | 内容 | 参考 |
 |----|------|------|
-| **Public algo** | 自研算法、轻量 fixture、模型卡、社区模板；许可证 **Apache-2.0 + DCO**；目标仓纸面 `lxrobertxiong-beep/robert_music`（同仓含 `control/`；远程尚未创建） | `mlops-drafts/audio-algo-public-skeleton/`、`community-templates/` |
+| **Public algo** | 自研算法、轻量 fixture、模型卡、社区模板；许可证 **Apache-2.0 + DCO**；公开仓 `lxrobertxiong-beep/robert_music`（同仓含 `control/` 与 `algo/filter-listen/`） | `mlops-drafts/audio-algo-public-skeleton/`、`community-templates/` |
 | **Restricted eval** | 重评测、数据集清单/外链、门禁脚本；目标仓纸面 `lxrobertxiong-beep/audio-algo-eval`（短名 `audio-algo-eval`；private/受限；远程尚未创建） | `mlops-drafts/audio-eval-restricted-skeleton/`、`call-nr-eval/` |
 | **Private never-public** | 杰理 SDK、调音包、密钥、厂商闭源库 | `/home/box/private/jieli/`；工作区投放 `/workspace/jieli-sdk-drop/` **不得**进公开 Git |
 
@@ -150,7 +150,7 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 
 | `type` | `plugin_id` | workdir | 入口 |
 |--------|-------------|---------|------|
-| `export_peq` | `filter-listen` | `/workspace/oss-ai-filter-listen` | `scripts/generate_peq_from_fr.py`（follow-on: apply / export_metrics） |
+| `export_peq` | `filter-listen` | `algo/filter-listen` | `scripts/generate_peq_from_fr.py`（follow-on: apply / export_metrics） |
 | `run_eval` | `call-nr` | `/workspace/call-nr-eval` | `scripts/run_vbd_eval.py --baseline ...`（algo weld: `/workspace/m1-call-nr`） |
 | `pin_version` | `call-nr` | `/workspace/m1-call-nr` | `scripts/setup_pins.sh` + registry pins 回显 |
 
@@ -163,7 +163,7 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 | 类别 | 可出现在公开算法仓 / 公开 release？ | 调控平台本地？ |
 |------|-------------------------------------|----------------|
 | `m1-call-nr` 自研脚本与契约文档 | 候选（合规评审后） | 是 |
-| `oss-ai-filter-listen` 自研 PEQ/图 | 候选（已标 Apache-2.0） | 是 |
+| `algo/filter-listen` 自研 PEQ/图 | 是（Apache-2.0 骨架，limiter **非听感定稿**） | 是 |
 | `call-nr-eval` 脚本与 mini fixture | 评测仓纸面 `audio-algo-eval`（受限） | 是 |
 | `/home/box/private/jieli/**` | **否** | 仅私有联调 |
 | `DynamicEQPro.a` | **否（硬禁）** | 不得经 export/publish job 拷贝到公开树 |
@@ -175,14 +175,12 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 
 ## 5.1 M2 公开仓合并注记（filter-listen）
 
-`filter-listen` 对应本地树 `/workspace/oss-ai-filter-listen/`（Apache-2.0 + DCO）。
+`filter-listen` 已在本仓 `algo/filter-listen/`（Apache-2.0 + DCO）。公开布局用 `algo/`（草案里的 `src/` 已按此迁入，不再使用 `src/`）。
 
-挂远程、并入方案 B **公开算法仓** `lxrobertxiong-beep/robert_music`（骨架参考 `audio-algo-public-skeleton` / M2）时：
-
-- 将插件源码目录 **`src/` → `algo/`** 一次性对齐公开仓布局；调控面进同仓 **`control/`**；
-- 入口脚本与 `configs/peq_schema.json`、`configs/graph_48k_10ms.yaml` 随公开仓保留；
-- **不得**随合并带入 `jieli-sdk-drop`、`*.key`、`private/jieli`、`DynamicEQPro.a`；
-- **远程仓尚未创建**：本目录只保留本地路径指针与纸面目标名，不推远程。
+- 入口脚本与 `configs/peq_schema.json`、`configs/graph_48k_10ms.yaml` 在模块内；`peq_schema` 字段名保持稳定；
+- `plugin-registry` 的 `local_path` 与 `export_peq` workdir 为仓内相对路径 `algo/filter-listen`（入口脚本仍相对该目录）；
+- **不得**带入 `jieli-sdk-drop`、`*.key`、`private/jieli`、`DynamicEQPro.a`；
+- soft limiter / DRC 为工程 stub，**非听感定稿**。
 
 `call-nr` 评测入口留在受限评测侧（`/workspace/call-nr-eval/` → 目标 `lxrobertxiong-beep/audio-algo-eval`）；算法焊接指向 `/workspace/m1-call-nr/`（进 `robert_music`），不把评测仓当作公开算法包主体。
 
@@ -196,7 +194,7 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 | `/workspace/mlops-drafts/audio-algo-public-skeleton/` | 公开算法仓目录骨架 |
 | `/workspace/mlops-drafts/audio-eval-restricted-skeleton/` | 受限评测仓纸面 |
 | `/workspace/community-templates/` | CoC / CONTRIBUTING / SECURITY / 公私边界 |
-| `/workspace/m1-call-nr/`、`/workspace/oss-ai-filter-listen/` | 首批插件实现树 |
+| `/workspace/m1-call-nr/`、`algo/filter-listen/` | 首批插件；filter-listen 已入库，call-nr 仍为盒内路径 |
 | `/workspace/call-nr-eval/` | 首个 `run_eval` 适配器 |
 
 ---
