@@ -51,6 +51,14 @@ bash algo/call-nr/scripts/setup_pins.sh
 
 `identity` 成功时打印一行 `contract=A_48k_480`，并写出与输入等长（在 48 kHz 时间轴上）的 WAV。`--backend passthrough` 与 identity 同一条路径。
 
+干净树上确认 `gtcrn` / `silero_vad` 缺权重时退出码为 3（不下载权重、不安装 torch）：
+
+```bash
+bash algo/call-nr/scripts/smoke_missing_weights.sh
+```
+
+路径约定、有权重时的命令，以及缺包时的 stderr，见下文「缺权重 / 缺包（exit 3）」。
+
 可选波形后端不在 CI 里安装：
 
 ```bash
@@ -116,6 +124,79 @@ python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o out/vad_probs.csv
 
 `SILERO_VAD_ROOT` 一旦设置，就只使用该目录。未设置时再看 `algo/call-nr/third_party/silero-vad` 和 `~/.cache/call-nr/silero-vad`。缺 checkout、缺 JIT 或缺 torch 时退出码 **3**。
 
+## 缺权重 / 缺包（exit 3）
+
+可选的 `gtcrn` 与 `silero_vad` 在缺权重、缺本地 checkout，或缺 `torch` 时退出码为 **3**。stderr 写明钉的 commit，以及该设置的环境变量。本文只说明路径和这个退出码。不报告 SI-SDR 或 PESQ，也不写评测准入。权重和上游树留在本机，不进 Git。
+
+CI（`.github/workflows/unit-tests.yml`）只安装 `requirements-dev.txt` 和 `algo/call-nr/requirements.txt`，然后 `pytest -q`。不安装 torch，不下载权重，不跑真实 GTCRN / Silero 推理。同一退出码由 `tests/test_call_nr_optional.py` 的 `test_cli_optional_backends_exit_3_without_weights` 覆盖。缺包由 `test_gtcrn_missing_torch_is_explicit` 和 `test_silero_missing_torch_is_explicit` 覆盖（仅当当前解释器没有 torch）。`scripts/smoke_missing_weights.sh` 是给人复制的同一条失败路径。workflow 不因为这段脚本去下载权重。
+
+### 无权重：验证失败路径
+
+先装 identity 运行库（这一步不含 torch）：
+
+```bash
+pip install -r algo/call-nr/requirements.txt
+bash algo/call-nr/scripts/smoke_missing_weights.sh
+```
+
+脚本会取消 `CALL_NR_GTCRN_WEIGHTS`、`GTCRN_CHECKPOINT`、`GTCRN_ROOT`、`SILERO_VAD_ROOT`，并把 `HOME` 指到临时目录，因此 `~/.cache/call-nr/` 不能把钉版补上。脚本自身退出码为 0 时，表示子进程退出码是 3，stdout 里能看到钉的 commit 和 stderr。若 `algo/call-nr/third_party/` 里已经有 GTCRN 或 Silero 文件，脚本退出 2：它不会用那些文件做推理，也不会删它们。把该目录挪开后再跑。
+
+等价的手跑命令（干净树，且上述变量未设置；`in.wav` 是任意短 WAV）：
+
+```bash
+python algo/call-nr/scripts/infer.py --backend gtcrn -i in.wav -o /tmp/gtcrn.wav
+echo "gtcrn exit=$?"
+# 期望 exit=3
+# stderr 含 502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73
+# 以及 CALL_NR_GTCRN_WEIGHTS、GTCRN_CHECKPOINT、GTCRN_ROOT
+# 和 model_trained_on_dns3.tar
+
+python algo/call-nr/scripts/infer.py --backend silero_vad -i in.wav -o /tmp/vad_probs.csv
+echo "silero exit=$?"
+# 期望 exit=3
+# stderr 含 066409f3d9db45a30d21dfcbf9147826ffdd7052
+# 以及 SILERO_VAD_ROOT、silero_vad.jit，并写明不调用 torch.hub
+
+python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o /tmp/vad_probs.csv
+# 期望 exit=3，stderr 同上
+```
+
+当前解释器没有 torch 时，脚本还会在临时目录放一个大于 10 KB 的假权重和没有 `.git` 的假 checkout（跑完即删），确认缺包同样是 exit 3：
+
+- GTCRN 的 stderr 含 `torch`、`einops` 和 `502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73`
+- Silero 的 stderr 含 `torch` 和 `066409f3d9db45a30d21dfcbf9147826ffdd7052`
+
+已经安装 torch 时跳过这一步。卸掉 torch 后再跑脚本，或在无 torch 的环境跑上面两个 pytest。
+
+### 有本地权重：跑通
+
+`GTCRN_ROOT` 若是 git checkout，`HEAD` 必须等于 `502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73`。Silero 只读本地 `hubconf.py`，不调用 `torch.hub`。git checkout 的 `HEAD` 必须等于 `066409f3d9db45a30d21dfcbf9147826ffdd7052`。
+
+GTCRN 权重查找，命中即停止：
+
+1. `CALL_NR_GTCRN_WEIGHTS`
+2. `GTCRN_CHECKPOINT`
+3. `$GTCRN_ROOT/checkpoints/model_trained_on_dns3.tar`
+4. `algo/call-nr/third_party/gtcrn/checkpoints/model_trained_on_dns3.tar`（目录已 gitignore）
+5. `~/.cache/call-nr/gtcrn/model_trained_on_dns3.tar`
+
+代码查找：`GTCRN_ROOT`，否则 `algo/call-nr/third_party/gtcrn`，否则 `~/.cache/call-nr/gtcrn/repo`（根目录要有 `gtcrn.py`）。
+
+Silero checkout：`SILERO_VAD_ROOT`，否则 `algo/call-nr/third_party/silero-vad`，否则 `~/.cache/call-nr/silero-vad`。目录里要有 `hubconf.py` 和 `src/silero_vad/data/silero_vad.jit`。
+
+```bash
+# GTCRN。exit 0 时写出 48 kHz WAV。需要本机的 torch、einops 和上面的权重。
+export GTCRN_ROOT=/path/to/gtcrn
+export CALL_NR_GTCRN_WEIGHTS="$GTCRN_ROOT/checkpoints/model_trained_on_dns3.tar"
+python algo/call-nr/scripts/infer.py --backend gtcrn -i in.wav -o out.wav
+
+# Silero。exit 0 时写出 CSV，并在同目录写 speech_timestamps.json。
+export SILERO_VAD_ROOT=/path/to/silero-vad
+python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o out/vad_probs.csv
+```
+
+克隆与 `git lfs pull` 的写法在上文 GTCRN、Silero 两节。本仓不保存 `*.tar` 或 JIT。
+
 ## 钉版
 
 | 名称 | 版本 | 引用 | 本仓 |
@@ -125,7 +206,7 @@ python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o out/vad_probs.csv
 | GTCRN | `502ebfab` | `502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73` | 不内置；`CALL_NR_GTCRN_WEIGHTS` 或 `GTCRN_CHECKPOINT`，代码 `GTCRN_ROOT` |
 | Silero VAD | `v6.2.3-8-g066409f` | `066409f3d9db45a30d21dfcbf9147826ffdd7052` | 不内置；`SILERO_VAD_ROOT` |
 
-`scripts/setup_pins.sh` 只核对 `PLUGIN.json` 里的上述引用。CI 不克隆上游、不下载权重。
+`scripts/setup_pins.sh` 只核对 `PLUGIN.json` 里的上述引用。`scripts/smoke_missing_weights.sh` 在干净树上断言缺权重时退出码 3。CI 不克隆上游、不下载权重、不安装 torch。
 
 ## 公私边界
 
