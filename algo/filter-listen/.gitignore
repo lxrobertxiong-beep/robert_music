@@ -38,11 +38,13 @@ outputs/
 *.key
 *.license
 
-# JieLi / AC69xx vendor drops only (avoid broad *SDK* matching self-named paths)
+# JieLi / AC69xx vendor drops only (avoid broad *SDK* matching self-named paths).
+# docs/jieli_capability_map.md is a clean-room table and must stay tracked.
 jieli*/
 jieli_*
 *jieli-sdk*
 *Jieli*
+!docs/jieli_capability_map.md
 AC697*/
 AC897*/
 AD697*/
