@@ -50,6 +50,9 @@ def test_run_demo_on_synthetic_fixtures(tmp_path: Path):
     assert isinstance(rmse, float)
     assert math.isfinite(rmse)
     assert rmse >= 0.0
+    # Default smoke score stays the pre-M4 unsmoothed per-bin fixture value.
+    assert abs(rmse - 4.16315) < 1e-9
+    assert metrics["fr_rmse_mode"] == "per_bin"
     assert "不宣称准入" in metrics["notes"]
     assert "非听感定稿" in metrics["notes"]
     assert "fixture/objective stub" in metrics["notes"]
@@ -60,7 +63,9 @@ def test_run_demo_on_synthetic_fixtures(tmp_path: Path):
     assert isinstance(metrics["peak"], float)
     assert 0.0 < metrics["peak"] < 1.0
     assert f"fr_rmse_db={rmse}" in proc.stdout
+    assert "fr_rmse_mode=per_bin" in proc.stdout
     assert "synthetic-fixture-objective-stub" in proc.stdout
+    assert "third_octave_fr_rmse_db=" in proc.stdout
 
     expected = _expected_fixture_rmse(peq)
     assert abs(rmse - round(expected, 6)) < 1e-9

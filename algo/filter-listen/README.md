@@ -73,7 +73,7 @@ python3 algo/filter-listen/scripts/export_metrics.py \
   -o /tmp/filter_listen_metrics.json
 ```
 
-不带 `--fr` 时 `fr_rmse_db` 保持 `null`。带上合成频响时写出的数是夹具客观 stub，不宣称准入，也不是听感定稿。
+不带 `--fr`、也不带 `--wav-path-rmse` 时 `fr_rmse_db` 保持 `null`。带上合成频响时写出的数是夹具客观 stub，不宣称准入，也不是听感定稿。默认 `--fr-rmse-mode per_bin`（未平滑的逐频点 dB RMSE）。可选 `third_octave`（20 Hz–20 kHz ISO 近似 1/3 倍频程带内 dB 平均后再 RMSE）和 `--wav-path-rmse`（WAV 或合成探针走 PEQ、计分时 limiter 关闭、Welch 估计传递函数；与 `--fr` 同时给出时 CSV 优先）。`fr_rmse_mode` 写在 metrics JSON 里。详见 [`docs/demo.md`](docs/demo.md)。
 
 可选 AutoEq（MIT，不 vendor）：
 

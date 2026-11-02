@@ -5,9 +5,11 @@
 
 Stdlib only. Always passes ``--no-autoeq``. The soft limiter inside
 ``apply_peq_wav.py`` stays an engineering stub (非听感定稿). ``fr_rmse_db``
-on this path is the dB RMSE of the synthetic FR after the PEQ versus the
-built-in target. That number is a fixture/objective stub only: this script
-does not report listening quality and does not claim admission (不宣称准入).
+on this path is the unsmoothed per-bin dB RMSE of the synthetic FR after the
+PEQ versus the built-in target (``fr_rmse_mode=per_bin``). A 1/3-oct figure
+may be printed as extra info and is not the default score. That number is a
+fixture/objective stub only: this script does not report listening quality
+and does not claim admission (不宣称准入).
 """
 
 from __future__ import annotations
@@ -97,7 +99,53 @@ def _check_metrics(path: Path, peq: dict) -> dict:
         raise SystemExit("demo: metrics preamp_db does not match the PEQ document")
     if doc.get("error") is not None or doc.get("peak") is None:
         raise SystemExit(f"demo: metrics stub failed: {doc}")
+    if doc.get("fr_rmse_mode") != "per_bin":
+        raise SystemExit(
+            "demo: default fr_rmse_mode must stay per_bin "
+            f"(unsmoothed fixture bins), got {doc.get('fr_rmse_mode')!r}"
+        )
     return doc
+
+
+def _third_octave_score(fr: Path, peq_path: Path) -> float:
+    """Opt-in 1/3-oct score for the log line. Does not replace metrics.json."""
+    with tempfile.TemporaryDirectory(prefix="filter-listen-third-oct-") as tmp:
+        side = Path(tmp) / "metrics.json"
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS / "export_metrics.py"),
+                "--peq",
+                str(peq_path),
+                "--fr",
+                str(fr),
+                "--target",
+                "harman_like",
+                "--fr-rmse-mode",
+                "third_octave",
+                "-o",
+                str(side),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0:
+            sys.stderr.write(proc.stdout)
+            sys.stderr.write(proc.stderr)
+            raise SystemExit(proc.returncode)
+        doc = json.loads(side.read_text(encoding="utf-8"))
+    rmse = doc.get("fr_rmse_db")
+    if doc.get("fr_rmse_mode") != "third_octave":
+        raise SystemExit(f"demo: third_octave opt-in did not report its mode: {doc}")
+    if isinstance(rmse, bool) or not isinstance(rmse, (int, float)) or not math.isfinite(float(rmse)):
+        raise SystemExit(f"demo: third_octave opt-in score missing: {doc}")
+    if float(rmse) < 0.0:
+        raise SystemExit(f"demo: third_octave score must be >= 0, got {rmse}")
+    notes = str(doc.get("notes") or "")
+    if "非听感定稿" not in notes or "不宣称准入" not in notes:
+        raise SystemExit("demo: third_octave notes must keep the fixture disclaimer")
+    return float(rmse)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -192,6 +240,7 @@ def main(argv: list[str] | None = None) -> int:
         ]
     )
     metrics = _check_metrics(metrics_path, peq)
+    third_octave = _third_octave_score(args.fr, peq_path)
 
     print(
         "demo ok:"
@@ -202,9 +251,15 @@ def main(argv: list[str] | None = None) -> int:
         f" bands={len(peq['bands'])}"
         f" peak={metrics['peak']}"
         f" fr_rmse_db={metrics['fr_rmse_db']}"
+        " fr_rmse_mode=per_bin"
         " fr_rmse_db_scope=synthetic-fixture-objective-stub (不宣称准入)"
         " no-autoeq"
         " limiter=engineering-stub (非听感定稿)"
+    )
+    print(
+        f"third_octave_fr_rmse_db={third_octave}"
+        " opt-in only (not the default fr_rmse_db);"
+        " fixture/objective stub; 不宣称准入; 非听感定稿"
     )
     return 0
 
