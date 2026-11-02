@@ -36,7 +36,7 @@
 | id | 本地树 | 目标仓（纸面） | 能力 |
 |----|--------|----------------|------|
 | `filter-listen` | `algo/filter-listen/`（仓内相对路径） | `lxrobertxiong-beep/robert_music` | `export_peq`；48 kHz / 10 ms；Apache-2.0+DCO |
-| `call-nr` | `algo/call-nr`（评测适配留在受限仓 `audio-algo-eval` 的 `scripts/run_vbd_eval.py`，不拷进本仓） | 算法→`robert_music`；eval→`audio-algo-eval` | `run_eval` / `pin_version`；钉 `RNNoise@v0.2`、`DeepFilterNet3@v0.5.6`；**不宣称准入** |
+| `call-nr` | `algo/call-nr`（评测适配留在受限仓 `audio-algo-eval` 的 `scripts/run_vbd_eval.py`，不拷进本仓） | 算法→`robert_music`；eval→`audio-algo-eval` | `run_eval` / `pin_version`；钉 `RNNoise@v0.2`、`DeepFilterNet3@v0.5.6`、`GTCRN@502ebfab`、`Silero VAD@066409f`（本地权重，不入库）；**不宣称准入** |
 
 ## 本地如何看 stub
 

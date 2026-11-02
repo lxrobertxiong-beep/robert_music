@@ -102,4 +102,8 @@ def test_setup_pins_prints_commits_without_network():
     assert proc.returncode == 0, proc.stderr
     assert "904a876dce1f9ab8860c0a5000ed151f9f6eef58" in proc.stdout
     assert "978576aa8400552a4ce9730838c635aa30db5e61" in proc.stdout
+    assert "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73" in proc.stdout
+    assert "066409f3d9db45a30d21dfcbf9147826ffdd7052" in proc.stdout
+    assert "CALL_NR_GTCRN_WEIGHTS" in proc.stdout
+    assert "SILERO_VAD_ROOT" in proc.stdout
     assert "no weights downloaded" in proc.stdout

@@ -32,7 +32,9 @@ class DenoiseBackend(Protocol):
     sample rate and returns audio of the same length. ``process_frame``
     consumes exactly one contract-A frame. ``lookahead_frames`` is 0 when
     the backend does not read future frames, and ``None`` when the
-    backend's lookahead is model-defined and non-zero (DeepFilterNet3).
+    backend's lookahead is model-defined (DeepFilterNet3) or the desktop
+    path is a whole-buffer STFT (GTCRN). Silero VAD is not a
+    ``DenoiseBackend``; it writes timestamps from its own CLI.
     """
 
     name: str

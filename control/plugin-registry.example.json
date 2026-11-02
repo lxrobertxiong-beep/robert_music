@@ -9,7 +9,7 @@
       "visibility": "public_candidate",
       "license": {
         "spdx": "Apache-2.0",
-        "notes": "Self-authored skeleton: Apache-2.0 + DCO. Optional RNNoise and DeepFilterNet pins keep their upstream licenses and are not vendored."
+        "notes": "Self-authored skeleton: Apache-2.0 + DCO. Optional RNNoise, DeepFilterNet, GTCRN, and Silero VAD pins keep their upstream licenses and are not vendored. Weights stay on a local path. Not an eval-admission claim."
       },
       "pins": [
         {
@@ -21,6 +21,20 @@
           "name": "DeepFilterNet3",
           "version": "v0.5.6",
           "ref": "deepfilternet==0.5.6 / 978576aa8400552a4ce9730838c635aa30db5e61"
+        },
+        {
+          "name": "GTCRN",
+          "version": "502ebfab",
+          "ref": "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73",
+          "url": "https://github.com/Xiaobin-Rong/gtcrn",
+          "checkpoint": "checkpoints/model_trained_on_dns3.tar"
+        },
+        {
+          "name": "Silero VAD",
+          "version": "v6.2.3-8-g066409f",
+          "ref": "066409f3d9db45a30d21dfcbf9147826ffdd7052",
+          "url": "https://github.com/snakers4/silero-vad",
+          "jit": "src/silero_vad/data/silero_vad.jit"
         }
       ],
       "entrypoints": [
@@ -28,7 +42,13 @@
           "name": "infer",
           "kind": "cli_script",
           "path": "scripts/infer.py",
-          "args_hint": "--backend identity|rnnoise|deepfilternet -i <in.wav> -o <out.wav>"
+          "args_hint": "--backend identity|passthrough|rnnoise|deepfilternet|gtcrn|silero_vad -i <in.wav> -o <out>"
+        },
+        {
+          "name": "run_silero_vad",
+          "kind": "cli_script",
+          "path": "scripts/run_silero_vad.py",
+          "args_hint": "-i <in.wav> -o <vad_probs.csv>"
         },
         {
           "name": "setup_pins",

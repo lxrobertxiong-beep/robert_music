@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "call-nr"
 version = "0.1.0"
-description = "Public reproducible skeleton for call noise reduction (contract A identity path)."
+description = "Public call noise reduction skeleton: contract A identity path and optional local GTCRN / Silero VAD pins."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
