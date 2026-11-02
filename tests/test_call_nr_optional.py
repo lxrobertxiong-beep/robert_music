@@ -24,6 +24,7 @@ from call_nr.pipeline import BackendUnavailable
 ROOT = Path(__file__).resolve().parents[1]
 INFER = ROOT / "algo" / "call-nr" / "scripts" / "infer.py"
 SILERO_CLI = ROOT / "algo" / "call-nr" / "scripts" / "run_silero_vad.py"
+READY = ROOT / "algo" / "call-nr" / "scripts" / "check_local_weights_ready.sh"
 README = ROOT / "algo" / "call-nr" / "README.md"
 GITIGNORE = ROOT / ".gitignore"
 
@@ -91,6 +92,9 @@ def test_readme_and_gitignore_document_local_pins():
     assert ".cache/call-nr" in text
     assert "评测准入" in text
     assert "smoke_missing_weights.sh" in text
+    assert "本机就绪检查" in text
+    assert "bash algo/call-nr/scripts/check_local_weights_ready.sh" in text
+    assert "不宣称准入" in text
     ignored = GITIGNORE.read_text(encoding="utf-8")
     assert "algo/call-nr/third_party/" in ignored
     assert "*.tar" in ignored
@@ -282,3 +286,93 @@ def test_smoke_missing_weights_script():
     if importlib.util.find_spec("torch") is None:
         assert "gtcrn missing torch: exit 3" in proc.stdout
         assert "silero missing torch: exit 3" in proc.stdout
+
+
+def _run_ready(args: list[str], home: Path, tmpdir: Path | None = None) -> subprocess.CompletedProcess[str]:
+    env = _clean_subprocess_env(home)
+    env["PYTHON"] = sys.executable
+    if tmpdir is not None:
+        tmpdir.mkdir(parents=True, exist_ok=True)
+        env["TMPDIR"] = str(tmpdir)
+    return subprocess.run(
+        ["bash", str(READY), *args],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def _third_party_pin_present() -> bool:
+    base = ROOT / "algo" / "call-nr" / "third_party"
+    return (base / "gtcrn" / "gtcrn.py").is_file() or (base / "silero-vad" / "hubconf.py").is_file()
+
+
+def test_check_local_weights_ready_script_exists_and_help(tmp_path: Path):
+    """CI covers the script and --help. No torch install and no weight download."""
+    assert READY.is_file()
+    text = READY.read_text(encoding="utf-8")
+    assert "smoke_missing_weights.sh" in text
+    assert "git clone" not in text
+    proc = _run_ready(["--help"], tmp_path / "home")
+    assert proc.returncode == 0, proc.stderr
+    assert "--require" in proc.stdout
+    assert "--missing-only" in proc.stdout
+    assert "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73" in proc.stdout
+    assert "066409f3d9db45a30d21dfcbf9147826ffdd7052" in proc.stdout
+    assert "CALL_NR_GTCRN_WEIGHTS" in proc.stdout
+    assert "GTCRN_ROOT" in proc.stdout
+    assert "SILERO_VAD_ROOT" in proc.stdout
+    assert "model_trained_on_dns3.tar" in proc.stdout
+    assert "silero_vad.jit" in proc.stdout
+    assert "不宣称准入" in proc.stdout
+    combined = proc.stdout + proc.stderr
+    assert "check_local_weights_ready: exit 0" not in combined
+
+
+def test_check_local_weights_ready_clean_tree_exits_3(tmp_path: Path):
+    """Default and --require exit 3 when the local pin is absent. No download."""
+    if _third_party_pin_present():
+        pytest.skip("third_party pin is present; clean-tree exit 3 is not asserted")
+    scratch = tmp_path / "tmp"
+    for args in ([], ["--require"]):
+        proc = _run_ready(args, tmp_path / f"home-{len(args)}", scratch)
+        assert proc.returncode == 3, proc.stdout + proc.stderr
+        assert "check_local_weights_ready: exit 3" in proc.stderr
+        assert "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73" in proc.stderr
+        assert "066409f3d9db45a30d21dfcbf9147826ffdd7052" in proc.stderr
+        assert "CALL_NR_GTCRN_WEIGHTS" in proc.stderr
+        assert "GTCRN_CHECKPOINT" in proc.stderr
+        assert "GTCRN_ROOT" in proc.stderr
+        assert "model_trained_on_dns3.tar" in proc.stderr
+        assert "SILERO_VAD_ROOT" in proc.stderr
+        assert "silero_vad.jit" in proc.stderr
+        assert "torch.hub is not used" in proc.stderr
+        assert "不宣称准入" in proc.stderr
+        assert "check_local_weights_ready: exit 0" not in proc.stdout
+    assert list(scratch.glob("call-nr-weights-ready.*")) == []
+
+
+def test_check_local_weights_ready_missing_only_matches_exit_3_smoke(tmp_path: Path):
+    """--missing-only delegates to smoke_missing_weights.sh (clean tree, child exit 3)."""
+    if _third_party_pin_present():
+        pytest.skip("third_party pin is present; smoke_missing_weights.sh would exit 2")
+    proc = _run_ready(["--missing-only"], tmp_path / "home")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73" in proc.stdout
+    assert "CALL_NR_GTCRN_WEIGHTS" in proc.stdout
+    assert "066409f3d9db45a30d21dfcbf9147826ffdd7052" in proc.stdout
+    assert "SILERO_VAD_ROOT" in proc.stdout
+    assert "torch.hub is not used" in proc.stdout
+    assert "exit 3" in proc.stdout
+    assert "no weights downloaded" in proc.stdout
+    if importlib.util.find_spec("torch") is None:
+        assert "gtcrn missing torch: exit 3" in proc.stdout
+        assert "silero missing torch: exit 3" in proc.stdout
+
+
+def test_check_local_weights_ready_rejects_unknown_flags(tmp_path: Path):
+    unknown = _run_ready(["--download"], tmp_path / "home")
+    assert unknown.returncode == 2
+    both = _run_ready(["--require", "--missing-only"], tmp_path / "home-both")
+    assert both.returncode == 2

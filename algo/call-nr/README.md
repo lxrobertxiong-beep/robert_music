@@ -57,7 +57,7 @@ bash algo/call-nr/scripts/setup_pins.sh
 bash algo/call-nr/scripts/smoke_missing_weights.sh
 ```
 
-路径约定、有权重时的命令，以及缺包时的 stderr，见下文「缺权重 / 缺包（exit 3）」。
+路径约定、有权重时的命令，以及缺包时的 stderr，见下文「缺权重 / 缺包（exit 3）」和「本机就绪检查」。
 
 可选波形后端不在 CI 里安装：
 
@@ -128,7 +128,7 @@ python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o out/vad_probs.csv
 
 可选的 `gtcrn` 与 `silero_vad` 在缺权重、缺本地 checkout，或缺 `torch` 时退出码为 **3**。stderr 写明钉的 commit，以及该设置的环境变量。本文只说明路径和这个退出码。不报告 SI-SDR 或 PESQ，也不写评测准入。权重和上游树留在本机，不进 Git。
 
-CI（`.github/workflows/unit-tests.yml`）只安装 `requirements-dev.txt` 和 `algo/call-nr/requirements.txt`，然后 `pytest -q`。不安装 torch，不下载权重，不跑真实 GTCRN / Silero 推理。同一退出码由 `tests/test_call_nr_optional.py` 的 `test_cli_optional_backends_exit_3_without_weights` 覆盖。缺包由 `test_gtcrn_missing_torch_is_explicit` 和 `test_silero_missing_torch_is_explicit` 覆盖（仅当当前解释器没有 torch）。`scripts/smoke_missing_weights.sh` 是给人复制的同一条失败路径。workflow 不因为这段脚本去下载权重。
+CI（`.github/workflows/unit-tests.yml`）只安装 `requirements-dev.txt` 和 `algo/call-nr/requirements.txt`，然后 `pytest -q`。不安装 torch，不下载权重，不跑真实 GTCRN / Silero 推理。同一退出码由 `tests/test_call_nr_optional.py` 的 `test_cli_optional_backends_exit_3_without_weights` 覆盖。缺包由 `test_gtcrn_missing_torch_is_explicit` 和 `test_silero_missing_torch_is_explicit` 覆盖（仅当当前解释器没有 torch）。`scripts/smoke_missing_weights.sh` 是给人复制的同一条失败路径。`scripts/check_local_weights_ready.sh` 在干净树上同样是 exit 3；本机权重和 torch 都齐时才 exit 0。workflow 不因为这两段脚本去安装 torch 或下载权重。
 
 ### 无权重：验证失败路径
 
@@ -197,6 +197,34 @@ python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o out/vad_probs.csv
 
 克隆与 `git lfs pull` 的写法在上文 GTCRN、Silero 两节。本仓不保存 `*.tar` 或 JIT。
 
+### 本机就绪检查
+
+权重、代码和当前解释器里的 `torch`（GTCRN 还要 `einops`）都齐时，用下面这一条对 GTCRN 与 Silero 各跑最短烟测。环境变量、查找顺序、克隆和 `git lfs pull` 与上文「有本地权重：跑通」以及 GTCRN、Silero 两节相同，不另设一套路径。
+
+```bash
+bash algo/call-nr/scripts/check_local_weights_ready.sh
+```
+
+`--require` 与不带参数相同。
+
+- 两路烟测都成功：脚本 **exit 0**。输入是脚本生成的短时音，产物在临时目录，结束即删，不写进本仓。
+- 缺权重、缺 pin、缺 `torch` / `einops`，或缺 `numpy` / `soundfile` / `soxr`：脚本 **exit 3**。stderr 写明缺哪一项，以及该设置的变量：`CALL_NR_GTCRN_WEIGHTS` 或 `GTCRN_CHECKPOINT`、`GTCRN_ROOT`、`SILERO_VAD_ROOT`。
+- 不会克隆上游，不会下载权重，不会安装 torch。CI 不跑成功路径，也不为这条脚本安装 torch。
+
+GTCRN 钉 `502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73`。代码是 `GTCRN_ROOT`，否则 `algo/call-nr/third_party/gtcrn`，否则 `~/.cache/call-nr/gtcrn/repo`（根目录要有 `gtcrn.py`；目录若是 git checkout，`HEAD` 必须等于该 commit）。权重顺序是 `CALL_NR_GTCRN_WEIGHTS`、`GTCRN_CHECKPOINT`、`$GTCRN_ROOT/checkpoints/model_trained_on_dns3.tar`、`third_party` 下同名文件、`~/.cache/call-nr/gtcrn/model_trained_on_dns3.tar`。
+
+Silero 钉 `066409f3d9db45a30d21dfcbf9147826ffdd7052`。`SILERO_VAD_ROOT`，否则 `algo/call-nr/third_party/silero-vad`，否则 `~/.cache/call-nr/silero-vad`。目录里要有 `hubconf.py` 和 `src/silero_vad/data/silero_vad.jit`。不调用 `torch.hub`。
+
+只想确认干净树会失败时：
+
+```bash
+bash algo/call-nr/scripts/check_local_weights_ready.sh --missing-only
+```
+
+`--missing-only` 执行 `scripts/smoke_missing_weights.sh`（见「无权重：验证失败路径」）。子进程 exit 3；断言成立时包装脚本 exit 0。它会清掉上述四个变量，并把 `HOME` 指到临时目录。
+
+这次检查只说明本机 pin 能跑通最短烟测。不报告 SI-SDR 或 PESQ，**不宣称准入**。
+
 ## 钉版
 
 | 名称 | 版本 | 引用 | 本仓 |
@@ -206,7 +234,7 @@ python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o out/vad_probs.csv
 | GTCRN | `502ebfab` | `502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73` | 不内置；`CALL_NR_GTCRN_WEIGHTS` 或 `GTCRN_CHECKPOINT`，代码 `GTCRN_ROOT` |
 | Silero VAD | `v6.2.3-8-g066409f` | `066409f3d9db45a30d21dfcbf9147826ffdd7052` | 不内置；`SILERO_VAD_ROOT` |
 
-`scripts/setup_pins.sh` 只核对 `PLUGIN.json` 里的上述引用。`scripts/smoke_missing_weights.sh` 在干净树上断言缺权重时退出码 3。CI 不克隆上游、不下载权重、不安装 torch。
+`scripts/setup_pins.sh` 只核对 `PLUGIN.json` 里的上述引用。`scripts/smoke_missing_weights.sh` 在干净树上断言缺权重时退出码 3。`scripts/check_local_weights_ready.sh` 在本机权重就绪时做最短烟测（exit 0），缺权重或缺包时 exit 3。CI 不克隆上游、不下载权重、不安装 torch。
 
 ## 公私边界
 
