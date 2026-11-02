@@ -15,26 +15,40 @@
         {
           "name": "RNNoise",
           "version": "v0.2",
-          "ref": "904a876dce1f9ab8860c0a5000ed151f9f6eef58"
+          "ref": "904a876dce1f9ab8860c0a5000ed151f9f6eef58",
+          "optional": true,
+          "notes": "Not vendored. Build upstream yourself. Not an eval-admission claim."
         },
         {
           "name": "DeepFilterNet3",
           "version": "v0.5.6",
-          "ref": "deepfilternet==0.5.6 / 978576aa8400552a4ce9730838c635aa30db5e61"
+          "ref": "978576aa8400552a4ce9730838c635aa30db5e61",
+          "pypi": "deepfilternet==0.5.6",
+          "optional": true,
+          "notes": "Optional extra. Not an eval-admission claim."
         },
         {
           "name": "GTCRN",
           "version": "502ebfab",
           "ref": "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73",
           "url": "https://github.com/Xiaobin-Rong/gtcrn",
-          "checkpoint": "checkpoints/model_trained_on_dns3.tar"
+          "checkpoint": "checkpoints/model_trained_on_dns3.tar",
+          "weights_env": ["CALL_NR_GTCRN_WEIGHTS", "GTCRN_CHECKPOINT"],
+          "code_env": "GTCRN_ROOT",
+          "cache": "~/.cache/call-nr/gtcrn/model_trained_on_dns3.tar",
+          "optional": true,
+          "notes": "No upstream release tag. Weights are not vendored. Not an eval-admission claim."
         },
         {
           "name": "Silero VAD",
           "version": "v6.2.3-8-g066409f",
           "ref": "066409f3d9db45a30d21dfcbf9147826ffdd7052",
           "url": "https://github.com/snakers4/silero-vad",
-          "jit": "src/silero_vad/data/silero_vad.jit"
+          "jit": "src/silero_vad/data/silero_vad.jit",
+          "code_env": "SILERO_VAD_ROOT",
+          "cache": "~/.cache/call-nr/silero-vad/",
+          "optional": true,
+          "notes": "v6.2.x line: 8 commits after tag v6.2.3, not the tag itself. JIT is not vendored. Not an eval-admission claim."
         }
       ],
       "entrypoints": [
@@ -103,7 +117,7 @@
           "name": "generate_peq_from_fr",
           "kind": "cli_script",
           "path": "scripts/generate_peq_from_fr.py",
-          "args_hint": "--fr <fr.csv> [--target harman_like] [--no-autoeq] -o <peq.json>"
+          "args_hint": "--fr <fr.csv> [--target harman_like] [--no-autoeq] -o <peq.json> (control-plane export_peq defaults --no-autoeq; AutoEq is optional and not vendored)"
         },
         {
           "name": "apply_peq_wav",
@@ -115,9 +129,16 @@
           "name": "export_metrics",
           "kind": "cli_script",
           "path": "scripts/export_metrics.py",
-          "args_hint": "--wav <wav> --peq <json> -o <metrics.json>"
+          "args_hint": "--wav <wav> --peq <json> -o <metrics.json> (fr_rmse_db only when --fr is passed; fixture stub, not an admission claim)"
+        },
+        {
+          "name": "run_demo",
+          "kind": "cli_script",
+          "path": "scripts/run_demo.py",
+          "args_hint": "[--fr testdata/synthetic_fr.csv] [--out <dir>] (stdlib; always --no-autoeq; fixture fr_rmse_db is not an admission claim)"
         }
       ],
+      "notes": "peq_schema gain stays required on every band. lowpass and highpass ignore gain: RBJ cookbook passband gain is 0 dB (see peq.py). Not an admission claim.",
       "task_bindings": [
         "export_peq"
       ],

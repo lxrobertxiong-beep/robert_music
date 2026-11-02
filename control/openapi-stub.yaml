@@ -8,6 +8,8 @@ info:
     评测仓纸面：lxrobertxiong-beep/audio-algo-eval。
     任务类型：run_eval | export_peq | pin_version。
     POST /v1/jobs 解析 create_job→入口映射，返回 resolved_entrypoint（默认 dry-run）。
+    execute=true 只本地执行 export_peq 与 pin_version（不下载权重、不装 torch）。
+    run_eval 的 execute=true 返回 400 execute_disabled（评测树不在本仓）。
     映射见 JOB_ENTRYPOINT_MAP.md。
   version: 0.1.0-local
   contact:
@@ -99,7 +101,7 @@ paths:
                       - name: infer
                         kind: cli_script
                         path: scripts/infer.py
-                        args_hint: "--backend identity|rnnoise|deepfilternet -i <in.wav> -o <out.wav>"
+                        args_hint: "--backend identity|passthrough|rnnoise|deepfilternet|gtcrn|silero_vad -i <in.wav> -o <out>"
                       - name: setup_pins
                         kind: cli_script
                         path: scripts/setup_pins.sh
@@ -110,6 +112,12 @@ paths:
                       - name: DeepFilterNet3
                         version: v0.5.6
                         report_name: DeepFilterNet3@v0.5.6
+                      - name: GTCRN
+                        version: "502ebfab"
+                        report_name: GTCRN@502ebfab
+                      - name: Silero VAD
+                        version: v6.2.3-8-g066409f
+                        report_name: Silero VAD@v6.2.3-8-g066409f
                     env_examples:
                       RNNOISE_ROOT: "<local RNNoise@v0.2 checkout; not vendored>"
                     task_bindings: [run_eval, pin_version]
@@ -131,7 +139,8 @@ paths:
             default: false
           description: |
             false/omit = dry-run resolve only (default).
-            true = refused by stub (no subprocess).
+            true = subprocess for export_peq and pin_version only.
+            run_eval + true is refused (400 execute_disabled).
       requestBody:
         required: true
         content:
@@ -152,6 +161,7 @@ paths:
                   params:
                     fr: testdata/synthetic_fr.csv
                     target: harman_like
+                    no_autoeq: true
                     output: /tmp/peq.json
               pin_version:
                 value:
@@ -177,6 +187,7 @@ paths:
                     params:
                       fr: testdata/synthetic_fr.csv
                       target: harman_like
+                      no_autoeq: true
                       output: /tmp/peq.json
                     resolved_entrypoint:
                       workdir: algo/filter-listen
@@ -187,15 +198,37 @@ paths:
                         - testdata/synthetic_fr.csv
                         - --target
                         - harman_like
+                        - --no-autoeq
                         - -o
                         - /tmp/peq.json
-                      command_template: "python3 scripts/generate_peq_from_fr.py --fr testdata/synthetic_fr.csv --target harman_like -o /tmp/peq.json"
+                      command_template: "python3 scripts/generate_peq_from_fr.py --fr testdata/synthetic_fr.csv --target harman_like --no-autoeq -o /tmp/peq.json"
                       dry_run: true
+                      local_execute: true
                       follow_on:
                         - name: apply_peq_wav
                           script: scripts/apply_peq_wav.py
                     result: null
                     note: stub dry-run — resolved entrypoint only; does not execute plugins
+                export_peq_executed:
+                  value:
+                    id: job_01HZXEXECUTE
+                    type: export_peq
+                    plugin_id: filter-listen
+                    status: succeeded
+                    exit_code: 0
+                    stdout_summary: "wrote /tmp/peq.json (5 bands, generator=stdlib_peaking_stub)\n"
+                    stderr_summary: ""
+                    resolved_entrypoint:
+                      workdir: algo/filter-listen
+                      dry_run: false
+                      local_execute: true
+                    result:
+                      exit_code: 0
+                      stdout_summary: "wrote /tmp/peq.json (5 bands, generator=stdlib_peaking_stub)\n"
+                      stderr_summary: ""
+                      timed_out: false
+                      artifact_paths:
+                        - /tmp/peq.json
                 run_eval_dry_run:
                   value:
                     id: job_01HZRUNEV
@@ -218,7 +251,7 @@ paths:
                       follow_on: []
                     result: null
         "400":
-          description: Invalid type, plugin binding, or execute=true (disabled)
+          description: Invalid type, plugin binding, or run_eval execute=true (execute_disabled)
 
   /v1/jobs/{id}:
     get:
@@ -284,6 +317,8 @@ paths:
                     pins:
                       - RNNoise@v0.2
                       - DeepFilterNet3@v0.5.6
+                      - GTCRN@502ebfab
+                      - Silero VAD@v6.2.3-8-g066409f
                     note: 本地草案；无真实设备会话
         "404":
           description: Unknown device id
@@ -431,6 +466,15 @@ components:
       properties:
         exit_code:
           type: integer
+          nullable: true
+        stdout_summary:
+          type: string
+          description: Truncated child stdout (local execute only)
+        stderr_summary:
+          type: string
+          description: Truncated child stderr (local execute only)
+        timed_out:
+          type: boolean
         log_path:
           type: string
         artifact_paths:
@@ -460,6 +504,9 @@ components:
         dry_run:
           type: boolean
           default: true
+        local_execute:
+          type: boolean
+          description: True when this mapping may be subprocessed by the local stub
         algo_weld:
           type: string
           nullable: true

@@ -20,7 +20,9 @@
 | `smoke` | 同上 | `python smoke/run_smoke.py`，再跑 `python algo/filter-listen/scripts/run_demo.py`（stdlib，`--no-autoeq`） | 是 |
 | `control-stub-syntax` | 同上 | `python -m py_compile control/stub_server.py`；校验 `plugin-registry.example.json` JSON | 是 |
 
-**明确不进 P0 PR 门禁**：全集评测、主观听感、大模型下载、GTCRN / Silero 权重与 torch、需要密钥的厂商 SDK、`execute=true` 真跑 job。
+**明确不进 P0 PR 门禁**：全集评测、主观听感、大模型下载、GTCRN / Silero 权重与 torch、需要密钥的厂商 SDK、长期挂起的 stub HTTP 服务，以及 `run_eval` 的 `execute=true`（本仓无评测树，stub 返回 400 `execute_disabled`）。
+
+`export_peq` / `pin_version` 的本地 `execute=true` 不下载权重。单测会在仓库根解析 workdir 后跑这两条命令；CI 仍不安装 torch、不拉取 checkpoint。
 
 ## 建议 workflow 文件名（落地时）
 
@@ -35,8 +37,8 @@
 
 ## `control` 与 create_job
 
-- CI **不**启动长期 stub HTTP 服务做门禁；只做语法/JSON/映射表存在性检查。
-- `JOB_ENTRYPOINT_MAP.md` 与 `openapi-stub.yaml` 变更时，可加一步：断言映射键含 `run_eval` / `export_peq` / `pin_version`。
+- CI **不**启动长期 stub HTTP 服务做门禁；只做语法/JSON/映射表存在性检查，外加单测里的本地 `execute=true`（`export_peq`、`pin_version`）。
+- `JOB_ENTRYPOINT_MAP.md` 须含 `run_eval` / `export_peq` / `pin_version`，并写明 `execute=true` 与 `execute_disabled`（`run_eval` 拒绝执行）。
 
 ## Secrets / 权限
 
