@@ -55,6 +55,12 @@
           "kind": "cli_script",
           "path": "scripts/setup_pins.sh",
           "args_hint": "(prints pin metadata; does not download weights)"
+        },
+        {
+          "name": "smoke_missing_weights",
+          "kind": "cli_script",
+          "path": "scripts/smoke_missing_weights.sh",
+          "args_hint": "(asserts exit 3 when gtcrn/silero pins or torch are absent; does not download weights)"
         }
       ],
       "task_bindings": [

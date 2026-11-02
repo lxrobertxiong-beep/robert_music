@@ -90,6 +90,7 @@ def test_readme_and_gitignore_document_local_pins():
     assert "SILERO_VAD_ROOT" in text
     assert ".cache/call-nr" in text
     assert "评测准入" in text
+    assert "smoke_missing_weights.sh" in text
     ignored = GITIGNORE.read_text(encoding="utf-8")
     assert "algo/call-nr/third_party/" in ignored
     assert "*.tar" in ignored
@@ -255,3 +256,29 @@ def test_cli_optional_backends_exit_3_without_weights(tmp_path: Path):
         env=env,
     )
     assert missing.returncode == 2
+
+
+def test_smoke_missing_weights_script():
+    """The documented shell smoke must observe exit 3 and must not download weights."""
+    script = ROOT / "algo" / "call-nr" / "scripts" / "smoke_missing_weights.sh"
+    env = os.environ.copy()
+    env["PYTHON"] = sys.executable
+    for key in _WEIGHT_ENV:
+        env.pop(key, None)
+    proc = subprocess.run(
+        ["bash", str(script)],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73" in proc.stdout
+    assert "CALL_NR_GTCRN_WEIGHTS" in proc.stdout
+    assert "066409f3d9db45a30d21dfcbf9147826ffdd7052" in proc.stdout
+    assert "SILERO_VAD_ROOT" in proc.stdout
+    assert "torch.hub is not used" in proc.stdout
+    assert "no weights downloaded" in proc.stdout
+    if importlib.util.find_spec("torch") is None:
+        assert "gtcrn missing torch: exit 3" in proc.stdout
+        assert "silero missing torch: exit 3" in proc.stdout
