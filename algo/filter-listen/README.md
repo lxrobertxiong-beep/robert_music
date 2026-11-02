@@ -30,7 +30,7 @@ soft limiter / DRC 为工程占位，**非听感定稿**。详见 [`docs/archite
 
 P0 路径只依赖 Python 标准库（`math` / `wave` / `json`）。NumPy / SciPy / soundfile 不是门禁依赖；见 [`requirements.txt`](requirements.txt)（默认全部注释，避免拖垮 control-only CI）。
 
-最小离线 demo（合成 FR → PEQ → 正弦/静音 WAV → 指标 stub）见 [`docs/demo.md`](docs/demo.md)。limiter 仍是 **非听感定稿**。一条命令：
+最小离线 demo（合成 FR → PEQ → 正弦/静音 WAV → 夹具 `fr_rmse_db`）见 [`docs/demo.md`](docs/demo.md)。该 RMSE 只描述合成夹具，不宣称准入。limiter 仍是 **非听感定稿**。一条命令：
 
 ```bash
 python3 algo/filter-listen/scripts/run_demo.py
@@ -68,8 +68,12 @@ python3 algo/filter-listen/scripts/apply_peq_wav.py \
 python3 algo/filter-listen/scripts/export_metrics.py \
   --wav /tmp/filter_listen_out.wav \
   --peq /tmp/filter_listen_peq.json \
+  --fr algo/filter-listen/testdata/synthetic_fr.csv \
+  --target harman_like \
   -o /tmp/filter_listen_metrics.json
 ```
+
+不带 `--fr` 时 `fr_rmse_db` 保持 `null`。带上合成频响时写出的数是夹具客观 stub，不宣称准入，也不是听感定稿。
 
 可选 AutoEq（MIT，不 vendor）：
 
@@ -101,4 +105,4 @@ testdata/  synthetic_fr.csv, silence_0p5s.wav, sine_1k_0p5s.wav
 
 ## 评测入口
 
-[`docs/eval_metrics_draft.md`](docs/eval_metrics_draft.md) — 客观字段草稿 + 主观 ABX 入口。`fr_rmse_db` 在本骨架中保持 `null`，不编造指标。
+[`docs/eval_metrics_draft.md`](docs/eval_metrics_draft.md) — 客观字段草稿 + 主观 ABX 入口。demo 夹具上的 `fr_rmse_db` 是算出来的 dB RMSE（不宣称准入，非听感定稿）；没有频响曲线时该字段仍为 `null`。

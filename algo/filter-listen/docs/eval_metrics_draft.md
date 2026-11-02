@@ -2,20 +2,21 @@
 
 SPDX-License-Identifier: Apache-2.0
 
-本文件为 **骨架入口草稿**。`scripts/export_metrics.py` 写出 JSON stub，便于流水线挂接。  
-**不发明**未实测的 RMSE / MOS。`fr_rmse_db` 在本骨架中固定为 `null`。
+本文件为 **骨架入口草稿**。`scripts/export_metrics.py` 写出 JSON，便于流水线挂接。  
+**不发明**未提供曲线时的 RMSE，也不填 MOS。没有 `--fr` 时 `fr_rmse_db` 仍为 `null`。  
+demo 传入合成 `testdata/synthetic_fr.csv` 与内置目标时，按 PEQ 级联的 RBJ 幅度响应计算 dB RMSE（测量 + `preamp_db` + 各频点幅度，对夹具频点直接做均方根，**不做** 1/3 oct 平滑）。该数只是夹具上的客观 stub，**不宣称准入**，**非听感定稿**。soft limiter 不进入这个分数。
 
 ## 客观（可自动化）
 
 | 指标 | 定义草稿 | 数据 | 本骨架状态 |
 |------|----------|------|------------|
-| FR 误差 RMSE | 补偿后频响 vs 目标曲线，1/3 oct 或 FFT 平滑 dB RMSE | FR CSV + 目标 | stub 字段（null） |
+| FR 误差 RMSE | 补偿后频响（测量 + preamp + biquad 幅度）vs 目标曲线的 dB RMSE | FR CSV + 内置目标 | 提供 `--fr` 时计算；否则 `null`。demo 夹具上的数不是准入、也非听感定稿 |
 | 最大增益 / 预放大 | `preamp_db` 与 bands 峰值，防削波 | PEQ JSON | 读 JSON |
 | 峰值 / 真峰值近似 | 处理后 WAV peak、简易 true-peak stub | WAV | 16-bit PCM 峰值 |
 | 延迟 | 帧长 10 ms + 图声明 `latency_budget_ms` | graph yaml | 常量报告 |
 | 信噪 / 底噪抬升 | 静音段 RMS 处理前后差 | 静音 WAV | 可选，未实现 |
 
-输出示例键（`export_metrics.py`）：
+输出示例键（`export_metrics.py`）。未提供频响时：
 
 ```json
 {
@@ -28,6 +29,8 @@ SPDX-License-Identifier: Apache-2.0
   "notes": "stub — fill in eval harness"
 }
 ```
+
+demo 合成夹具路径会把 `fr_rmse_db` 写成有限数值，`notes` 标明 fixture/objective stub、不宣称准入、非听感定稿。不要把该数读成听感结论或板级准入。
 
 ## 主观（入口，不强制本仓 UI）
 
