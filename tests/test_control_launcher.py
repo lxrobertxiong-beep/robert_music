@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import shutil
 import socket
 import subprocess
 import time
@@ -159,17 +160,25 @@ def test_install_linux_writes_absolute_exec(tmp_path):
     installed = tmp_path / "share" / "applications" / "robert-music-control-stub.desktop"
     text = installed.read_text(encoding="utf-8")
     launcher = str(DESKTOP / "launch-stub.sh")
+    assert "[Desktop Entry]" in text
+    assert "Type=Application" in text
+    assert "Terminal=true" in text
     assert f"Exec={launcher}" in text
     assert f"TryExec={launcher}" in text
     assert f"Path={ROOT}" in text
-    assert "%k" not in text.split("Exec=", 1)[1].splitlines()[0]
-    validate = subprocess.run(
-        ["desktop-file-validate", str(installed)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert validate.returncode == 0, validate.stdout + validate.stderr
+    exec_line = text.split("Exec=", 1)[1].splitlines()[0]
+    assert exec_line.startswith("/")
+    assert "%k" not in exec_line
+    # Optional. GitHub runners do not install desktop-file-utils.
+    validator = shutil.which("desktop-file-validate")
+    if validator:
+        validate = subprocess.run(
+            [validator, str(installed)],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert validate.returncode == 0, validate.stdout + validate.stderr
     usage = subprocess.run(
         [launcher, "--usage-only"],
         cwd=tmp_path,
