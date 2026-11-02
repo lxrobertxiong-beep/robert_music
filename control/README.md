@@ -5,7 +5,7 @@
 本地镜像目录：`/workspace/robert_music/control/`（已随公开仓入库）。
 
 > **唯一落点**：`/workspace/control-platform/`  
-> **状态**：纸面 + OpenAPI stub + 本地 HTTP stub；已在公开仓；**无真密钥**；无生产服务。`filter-listen` 路径为仓内 `algo/filter-listen`。  
+> **状态**：纸面 + OpenAPI stub + 本地 HTTP stub；已在公开仓；**无真密钥**；无生产服务。`filter-listen` 路径为仓内 `algo/filter-listen`；`call-nr` 路径为仓内 `algo/call-nr`。  
 > **日期**：2026-11-02（Asia/Shanghai）  
 > **裁定**：UI=**C**（API + CLI 先行）；许可证 **Apache-2.0 + DCO**；  
 > 目标公开仓纸面 `lxrobertxiong-beep/robert_music`（同仓含 `control/`）；  
@@ -36,7 +36,7 @@
 | id | 本地树 | 目标仓（纸面） | 能力 |
 |----|--------|----------------|------|
 | `filter-listen` | `algo/filter-listen/`（仓内相对路径） | `lxrobertxiong-beep/robert_music` | `export_peq`；48 kHz / 10 ms；Apache-2.0+DCO |
-| `call-nr` | `/workspace/m1-call-nr/`（评测适配 `/workspace/call-nr-eval/` → `scripts/run_vbd_eval.py`） | 算法→`robert_music`；eval→`audio-algo-eval` | `run_eval` / `pin_version`；钉 `RNNoise@v0.2`、`DeepFilterNet3@v0.5.6`；**不宣称准入** |
+| `call-nr` | `algo/call-nr`（评测适配留在受限仓 `audio-algo-eval` 的 `scripts/run_vbd_eval.py`，不拷进本仓） | 算法→`robert_music`；eval→`audio-algo-eval` | `run_eval` / `pin_version`；钉 `RNNoise@v0.2`、`DeepFilterNet3@v0.5.6`；**不宣称准入** |
 
 ## 本地如何看 stub
 

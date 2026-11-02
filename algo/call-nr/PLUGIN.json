@@ -1,0 +1,61 @@
+{
+  "id": "call-nr",
+  "display_name": "Call noise reduction",
+  "license": {
+    "spdx": "Apache-2.0",
+    "notes": "Self-authored skeleton: Apache-2.0 + DCO. Optional RNNoise and DeepFilterNet pins keep their upstream licenses and are not vendored."
+  },
+  "contracts": {
+    "A": {
+      "id": "A_48k_480",
+      "role": "desktop_eval_boundary",
+      "sample_rate_hz": 48000,
+      "channels": 1,
+      "frame_samples": 480,
+      "frame_ms": 10,
+      "pcm_in_process": "float32",
+      "pcm_on_disk": "float32_wav",
+      "implemented": true
+    },
+    "B": {
+      "id": "B_16k_256",
+      "role": "on_device_pilot_documented_only",
+      "sample_rate_hz": 16000,
+      "channels": 1,
+      "frame_samples": 256,
+      "frame_ms_approx": 16,
+      "implemented": false,
+      "notes": "Documented frame shape only. Not bound to a vendor SDK or firmware insertion point. SRC between A and B belongs to a future adapter."
+    }
+  },
+  "pins": [
+    {
+      "name": "RNNoise",
+      "version": "v0.2",
+      "ref": "904a876dce1f9ab8860c0a5000ed151f9f6eef58",
+      "optional": true
+    },
+    {
+      "name": "DeepFilterNet3",
+      "version": "v0.5.6",
+      "ref": "978576aa8400552a4ce9730838c635aa30db5e61",
+      "pypi": "deepfilternet==0.5.6",
+      "optional": true
+    }
+  ],
+  "entrypoints": [
+    {
+      "name": "infer",
+      "kind": "cli_script",
+      "path": "scripts/infer.py",
+      "args_hint": "--backend identity|rnnoise|deepfilternet -i <in.wav> -o <out.wav>"
+    },
+    {
+      "name": "setup_pins",
+      "kind": "cli_script",
+      "path": "scripts/setup_pins.sh",
+      "args_hint": "(prints pin metadata; does not download weights)"
+    }
+  ],
+  "task_bindings": ["run_eval", "pin_version"]
+}
