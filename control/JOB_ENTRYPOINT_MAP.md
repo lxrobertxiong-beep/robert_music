@@ -1,11 +1,11 @@
 # create_job → 入口映射（纸面 + stub 契约）
 
-> **性质**：本地纸面；与 `stub_server.py` POST `/v1/jobs` 解析逻辑对齐。  
-> **状态**：远程仓尚未创建；默认 **dry-run**（只解析、不执行子进程）。  
+> **性质**：与 `stub_server.py` POST `/v1/jobs` 解析逻辑对齐。  
+> **状态**：默认 **dry-run**（只解析、不执行子进程）。`export_peq` 的 workdir 为仓内相对路径 `algo/filter-listen`。  
 > **日期**：2026-11-02（Asia/Shanghai）  
 > **UI**：已定 **C**（API + CLI 先行）
 
-目标仓（纸面名，未推远程）：
+目标仓：
 
 | 面 | 目标 | 说明 |
 |----|------|------|
@@ -18,7 +18,7 @@
 
 | `type` | `plugin_id` | workdir | 入口 / 命令模板 | 参数要点 |
 |--------|-------------|---------|-----------------|----------|
-| `export_peq` | `filter-listen` | `/workspace/oss-ai-filter-listen` | `python3 scripts/generate_peq_from_fr.py --fr {fr} [--target {target}] [--no-autoeq] -o {output}` | 后续可选：`scripts/apply_peq_wav.py`、`scripts/export_metrics.py`（见 `follow_on`） |
+| `export_peq` | `filter-listen` | `algo/filter-listen`（相对仓库根） | `python3 scripts/generate_peq_from_fr.py --fr {fr} [--target {target}] [--no-autoeq] -o {output}` | 后续可选：`scripts/apply_peq_wav.py`、`scripts/export_metrics.py`（见 `follow_on`） |
 | `run_eval` | `call-nr` | `/workspace/call-nr-eval` | `python3 scripts/run_vbd_eval.py --baseline {baseline}` | 算法钉扎侧：`/workspace/m1-call-nr`；**不宣称准入** |
 | `pin_version` | `call-nr` | `/workspace/m1-call-nr` | `bash scripts/setup_pins.sh` | 或仅回显 registry `pins[]`（stub 默认回显 + 命令模板） |
 
@@ -28,7 +28,7 @@
 
 ```json
 {
-  "workdir": "/workspace/...",
+  "workdir": "algo/filter-listen",
   "command": ["python3", "scripts/....py", "..."],
   "command_template": "python3 scripts/....py ...",
   "dry_run": true,

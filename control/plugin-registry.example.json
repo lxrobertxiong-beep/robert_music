@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1.0",
-  "description": "Local example registry for audio-algo control platform. Target paper repos: lxrobertxiong-beep/robert_music (algo+control) and lxrobertxiong-beep/audio-algo-eval (eval). License Apache-2.0+DCO. Remote not created yet; paths are box-local. Do not invent metrics.",
+  "description": "Example registry for the audio-algo control platform. Target repos: lxrobertxiong-beep/robert_music (algo+control) and lxrobertxiong-beep/audio-algo-eval (eval). License Apache-2.0+DCO. filter-listen paths are repo-relative (algo/filter-listen). call-nr paths stay box-local until that plugin lands. Do not invent metrics.",
   "plugins": [
     {
       "id": "call-nr",
@@ -71,11 +71,11 @@
     {
       "id": "filter-listen",
       "display_name": "AI filter / listen compensation (M2 PEQ)",
-      "local_path": "/workspace/oss-ai-filter-listen",
+      "local_path": "algo/filter-listen",
       "visibility": "public_candidate",
       "license": {
         "spdx": "Apache-2.0",
-        "notes": "Self-authored Apache-2.0 + DCO. AutoEq optional MIT pip dep (do not vendor whole tree); openMHA reference-only (no AGPL vendoring). No Jieli binaries. Remote paper target only; not pushed."
+        "notes": "Self-authored Apache-2.0 + DCO. AutoEq optional MIT pip dep (do not vendor whole tree); openMHA reference-only (no AGPL vendoring). No Jieli binaries. In-repo at algo/filter-listen; entrypoint paths are relative to local_path."
       },
       "pins": [],
       "entrypoints": [

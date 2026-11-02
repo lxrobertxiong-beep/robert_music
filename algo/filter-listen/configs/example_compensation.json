@@ -1,0 +1,17 @@
+{
+  "name": "example_harman_like_compensation",
+  "sample_rate": 48000,
+  "preamp_db": -3.0,
+  "bands": [
+    { "fc": 60.0, "Q": 0.7, "gain": 2.5, "type": "lowshelf" },
+    { "fc": 200.0, "Q": 1.0, "gain": -1.5, "type": "peaking" },
+    { "fc": 1000.0, "Q": 1.2, "gain": 1.0, "type": "peaking" },
+    { "fc": 3000.0, "Q": 1.5, "gain": -2.0, "type": "peaking" },
+    { "fc": 8000.0, "Q": 0.9, "gain": 1.5, "type": "highshelf" }
+  ],
+  "meta": {
+    "target": "harman_like_example",
+    "source_fr": "testdata/synthetic_fr.csv",
+    "generator": "example_hand_tuned"
+  }
+}

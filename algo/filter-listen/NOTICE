@@ -1,0 +1,43 @@
+filter-listen (AI filter / listening compensation skeleton)
+Copyright 2026 daopeng xiong and contributors
+
+This product is licensed under the Apache License, Version 2.0.
+See the LICENSE file at the repository root for the full license text.
+
+SPDX-License-Identifier: Apache-2.0
+
+------------------------------------------------------------------------------
+Third-party notices (reference / optional dependencies — NOT vendored)
+
+AutoEq (optional pip dependency)
+  Project: https://github.com/jaakkopasanen/AutoEq
+  License: MIT
+  Usage: optional offline helper for scripts/generate_peq_from_fr.py when
+  installed. This repository does NOT vendor the AutoEq source tree.
+  The P0 path works with --no-autoeq and does not import AutoEq.
+
+openMHA (reference-only rewrite inspiration)
+  Project: https://github.com/HoerTech-gGmbH/openMHA
+  License: AGPL-3.0
+  Status: DOCUMENTATION / ARCHITECTURE REFERENCE ONLY.
+  This repository does NOT include, link, or redistribute any openMHA
+  AGPL-licensed source code. Any DSP graph ideas are independently
+  reimplemented under Apache-2.0.
+
+NumPy / SciPy / soundfile (optional, not required for this skeleton)
+  Licenses: BSD-3-Clause (NumPy/SciPy), BSD-3-Clause (soundfile / libsndfile)
+  The in-repo P0 path uses the Python standard library (math, wave, json).
+  These packages are listed as commented extras in requirements.txt and are
+  not vendored. Do not add them to the repo-root requirements-dev.txt.
+
+JieLi / 杰理 SDK and effects libraries
+  Status: CLOSED-SOURCE VENDOR — MUST NOT be copied into this tree.
+  Forbidden artifacts include but are not limited to: .a, .bin, .fw, .exe,
+  license keys, SDK sources, DynamicEQPro.a, and proprietary header dumps
+  as product deliverables. Capability mapping in docs/jieli_capability_map.md
+  is a clean-room interface description only. This tree does not bundle the
+  SDK.
+
+Synthetic measurement CSV / WAV under testdata/
+  Created for this project as example/synthetic data (Apache-2.0).
+------------------------------------------------------------------------------

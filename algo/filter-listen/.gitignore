@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Generated artifacts
+*.wav
+!testdata/*.wav
+out/
+outputs/
+*.metrics.json
+/tmp_*/
+
+# Never commit vendor blobs (defense in depth)
+*.a
+*.bin
+*.fw
+*.exe
+*.dll
+*.so
+*.dylib
+*.key
+*.license
+
+# JieLi / AC69xx vendor drops only (avoid broad *SDK* matching self-named paths)
+jieli*/
+jieli_*
+*jieli-sdk*
+*Jieli*
+AC697*/
+AC897*/
+AD697*/
+*eq_cfg_hw.bin
+DynamicEQPro*
+*_earphone_SDK*
+*_earphone_release*

@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+# M2 realtime-ish graph: 48 kHz, 10 ms frames
+sample_rate: 48000
+frame_samples: 480
+frame_ms: 10.0
+latency_budget_ms: 10.0
+channels: 1
+enable_call_insert: false
+limiter:
+  type: soft_tanh
+  threshold: 0.98
+nodes:
+  - id: boundary_resample
+    type: resample_hook
+    target_sr: 48000
+  - id: call_insert
+    type: call_aec_ns_insert
+    enabled: false
+    note: "Unused in M2; reserved for call-path AEC/NS"
+  - id: peq_compensation
+    type: peq_cascade
+    schema: peq_schema.json
+    config: example_compensation.json
+  - id: soft_limiter
+    type: limiter
+    maps_from: mblimiter_or_drc
