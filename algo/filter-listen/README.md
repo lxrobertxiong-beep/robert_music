@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 可复现的 **开源骨架**：48 kHz、每帧 **480 samples（10 ms）**、可移植 PEQ JSON、离线 FR→PEQ→WAV 烟测。  
 本目录代码为 **Apache-2.0**（仓库根 `LICENSE`）。**不**纳入杰理闭源库；openMHA 仅作架构参考（不 vendor AGPL）；AutoEq 为可选 MIT pip 依赖，**不要**把整棵 AutoEq 树 vendor 进来。
 
-`peq_schema` 字段保持稳定，供调控平台把本插件注册为 PEQ 导出 / 应用入口：[`configs/peq_schema.json`](configs/peq_schema.json)。
+`peq_schema` 字段保持稳定，供调控平台把本插件注册为 PEQ 导出 / 应用入口：[`configs/peq_schema.json`](configs/peq_schema.json)。`gain` 对所有 band 仍必填。`lowpass` / `highpass` 忽略该字段：RBJ cookbook 低通 / 高通通带增益是 0 dB（见 `peq.py`）。
 
 导入名：目录带连字符，pytest / 应用代码使用桥接模块 `algo.filter_listen`（`algo/filter_listen.py`）。
 
