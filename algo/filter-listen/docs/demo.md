@@ -6,9 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 
 soft limiter 会在 `apply_peq_wav.py` 里跑过，但它是工程占位，**非听感定稿**。本 demo 不给出听感结论，也**不宣称准入**。
 
-`fr_rmse_db` 在这条合成夹具路径上是算出来的客观数：测量曲线加上 PEQ（`preamp_db` + biquad 级联幅度）相对内置 `harman_like` 目标，在夹具频点上的未平滑 dB RMSE。它只描述 `testdata/synthetic_fr.csv` 这份夹具，**不是听感定稿，也不是准入结果**。不传 `--fr` 时 `export_metrics.py` 仍把该字段留为 `null`，避免在没有曲线时编造分数。lowpass / highpass 的 cookbook 通带增益是 0 dB，schema 里的 `gain` 不进入这两类系数。
+`fr_rmse_db` 在这条合成夹具路径上是算出来的客观数：测量曲线加上 PEQ（`preamp_db` + biquad 级联幅度）相对内置 `harman_like` 目标，在夹具频点上的未平滑 dB RMSE。它只描述 `testdata/synthetic_fr.csv` 这份夹具，**不是听感定稿，也不是准入结果**。不传 `--fr` 时 `export_metrics.py` 仍把该字段留为 `null`，避免在没有曲线时编造分数。
 
-`configs/peq_schema.json` 不因本 demo 改字段。lowpass / highpass 使用 RBJ cookbook 系数，不再回退成 peaking。
+`configs/peq_schema.json` 不因本 demo 改字段名或必填项。`lowpass` / `highpass` 使用 RBJ cookbook 系数（通带增益 0 dB），schema 里仍必填的 `gain` 被忽略，不再回退成 peaking。
 
 ## 一条命令
 

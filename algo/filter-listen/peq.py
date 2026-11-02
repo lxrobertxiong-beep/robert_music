@@ -6,6 +6,10 @@ Stdlib port of the reviewed draft (RBJ Audio EQ Cookbook coefficients). The
 draft looped with NumPy; P0 CI keeps this path on the Python standard library.
 Maps conceptually to music_eq / post_eq coefficient cascades without including
 any vendor binary or SDK source.
+
+``lowpass`` and ``highpass`` ignore the peq_schema ``gain`` field. Those
+RBJ sections have 0 dB passband gain. ``gain`` stays required in the JSON
+schema so the platform plugin contract does not change.
 """
 
 from __future__ import annotations
@@ -86,11 +90,12 @@ class Biquad:
     def lowpass(cls, fc: float, q: float, gain_db: float, fs: float) -> Biquad:
         """RBJ cookbook lowpass. Passband gain is 0 dB.
 
-        ``gain_db`` is accepted so every band factory shares a signature.
-        The cookbook LPF does not use it; a non-zero schema gain must not
-        silently turn this into a peaking section.
+        ``gain_db`` is the peq_schema ``gain`` field. The field stays
+        required in JSON and is ignored on this path: the cookbook LPF has
+        no dB-gain term. Do not fold a non-zero gain into these coefficients
+        or fall back to a peaking section.
         """
-        del gain_db
+        del gain_db  # peq_schema gain ignored; RBJ LPF passband is 0 dB
         w0 = 2.0 * math.pi * fc / fs
         cos_w0 = math.cos(w0)
         alpha = math.sin(w0) / (2.0 * max(q, 1e-6))
@@ -107,10 +112,12 @@ class Biquad:
     def highpass(cls, fc: float, q: float, gain_db: float, fs: float) -> Biquad:
         """RBJ cookbook highpass. Passband gain is 0 dB.
 
-        ``gain_db`` is accepted for signature parity and is not part of the
-        cookbook HPF formulas.
+        ``gain_db`` is the peq_schema ``gain`` field. The field stays
+        required in JSON and is ignored on this path: the cookbook HPF has
+        no dB-gain term. Do not fold a non-zero gain into these coefficients
+        or fall back to a peaking section.
         """
-        del gain_db
+        del gain_db  # peq_schema gain ignored; RBJ HPF passband is 0 dB
         w0 = 2.0 * math.pi * fc / fs
         cos_w0 = math.cos(w0)
         alpha = math.sin(w0) / (2.0 * max(q, 1e-6))
@@ -135,6 +142,8 @@ class Biquad:
             return cls.lowshelf(fc, quality, gain, fs)
         if ftype in ("highshelf", "high_shelf", "hs"):
             return cls.highshelf(fc, quality, gain, fs)
+        # lowpass / highpass: peq_schema ``gain`` is still required, but the
+        # RBJ coefficient path ignores it (passband gain is 0 dB).
         if ftype in ("lowpass", "low_pass", "lp"):
             return cls.lowpass(fc, quality, gain, fs)
         if ftype in ("highpass", "high_pass", "hp"):
