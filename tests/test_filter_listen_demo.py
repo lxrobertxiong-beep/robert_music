@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
+import math
 import subprocess
 import sys
 import wave
@@ -44,13 +46,43 @@ def test_run_demo_on_synthetic_fixtures(tmp_path: Path):
                 assert not any(handle.readframes(handle.getnframes()))
 
     metrics = json.loads((out / "metrics.json").read_text(encoding="utf-8"))
-    assert metrics["fr_rmse_db"] is None
+    rmse = metrics["fr_rmse_db"]
+    assert isinstance(rmse, float)
+    assert math.isfinite(rmse)
+    assert rmse >= 0.0
+    assert "不宣称准入" in metrics["notes"]
+    assert "非听感定稿" in metrics["notes"]
+    assert "fixture/objective stub" in metrics["notes"]
     assert metrics["sample_rate"] == 48000
     assert metrics["frame_ms"] == 10
     assert metrics["preamp_db"] == peq["preamp_db"]
     assert metrics["error"] is None
     assert isinstance(metrics["peak"], float)
     assert 0.0 < metrics["peak"] < 1.0
+    assert f"fr_rmse_db={rmse}" in proc.stdout
+    assert "synthetic-fixture-objective-stub" in proc.stdout
+
+    expected = _expected_fixture_rmse(peq)
+    assert abs(rmse - round(expected, 6)) < 1e-9
+    bare = _expected_fixture_rmse(
+        {"sample_rate": 48000, "preamp_db": 0.0, "bands": []}
+    )
+    assert abs(rmse - bare) > 1e-3
+
+
+def _expected_fixture_rmse(peq: dict) -> float:
+    from algo.filter_listen import peq as peq_mod
+
+    spec = importlib.util.spec_from_file_location(
+        "generate_peq_from_fr_for_demo_rmse",
+        MODULE / "scripts" / "generate_peq_from_fr.py",
+    )
+    assert spec and spec.loader
+    fr_fit = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fr_fit)
+    freqs, measured = fr_fit.load_fr_csv(MODULE / "testdata" / "synthetic_fr.csv")
+    target = fr_fit.target_curve(freqs, "harman_like")
+    return float(peq_mod.fr_rmse_db(freqs, measured, target, peq))
 
 
 def test_demo_does_not_require_schema_edits():

@@ -44,7 +44,7 @@ flowchart LR
 2. `scripts/generate_peq_from_fr.py`：若已安装 **AutoEq（MIT，可选 pip）** 则尝试 AutoEq，解析不稳定时回退；默认与 `--no-autoeq` 走 **stdlib 峰值 EQ 拟合 stub**（P0 不依赖 NumPy/SciPy）。
 3. 输出符合 `configs/peq_schema.json` 的 JSON（`sample_rate`、`bands[]` 的 `fc` / `Q` / `gain` / `type` 保持稳定）。
 4. `scripts/apply_peq_wav.py` 按帧（480）级联 biquad。
-5. `scripts/export_metrics.py` 写出客观指标 JSON stub（`fr_rmse_db` 保持 null）。
+5. `scripts/export_metrics.py` 写出客观指标 JSON。未提供频响时 `fr_rmse_db` 为 null；demo 合成夹具会写入算出来的 dB RMSE，并在 notes 中标明该数不宣称准入、非听感定稿。
 
 ## 模块边界
 
