@@ -28,7 +28,13 @@ SPDX-License-Identifier: Apache-2.0
 
 soft limiter / DRC 为工程占位，**非听感定稿**。详见 [`docs/architecture.md`](docs/architecture.md)。
 
-P0 路径只依赖 Python 标准库（`math` / `wave` / `json`）。NumPy / SciPy / soundfile 不是门禁依赖；若后续 demo 需要，见 [`requirements.txt`](requirements.txt)（默认全部注释，避免拖垮 control-only CI）。
+P0 路径只依赖 Python 标准库（`math` / `wave` / `json`）。NumPy / SciPy / soundfile 不是门禁依赖；见 [`requirements.txt`](requirements.txt)（默认全部注释，避免拖垮 control-only CI）。
+
+最小离线 demo（合成 FR → PEQ → 正弦/静音 WAV → 指标 stub）见 [`docs/demo.md`](docs/demo.md)。limiter 仍是 **非听感定稿**。一条命令：
+
+```bash
+python3 algo/filter-listen/scripts/run_demo.py
+```
 
 ## 怎么跑单元烟测
 
@@ -36,7 +42,8 @@ P0 路径只依赖 Python 标准库（`math` / `wave` / `json`）。NumPy / SciP
 
 ```bash
 pytest -q tests/test_filter_listen_peq.py tests/test_filter_listen_graph.py \
-  tests/test_filter_listen_schema.py tests/test_filter_listen_scripts.py
+  tests/test_filter_listen_schema.py tests/test_filter_listen_scripts.py \
+  tests/test_filter_listen_demo.py
 ```
 
 或直接 `pytest -q`。
@@ -79,8 +86,8 @@ python3 algo/filter-listen/scripts/generate_peq_from_fr.py \
 
 ```
 configs/   graph_48k_10ms.yaml, peq_schema.json, example_compensation.json
-docs/      architecture, jieli_capability_map, m3_dependencies, eval_metrics_draft
-scripts/   generate_peq_from_fr.py, apply_peq_wav.py, export_metrics.py
+docs/      architecture, demo, jieli_capability_map, m3_dependencies, eval_metrics_draft
+scripts/   run_demo.py, generate_peq_from_fr.py, apply_peq_wav.py, export_metrics.py
 peq.py     可移植 biquad cascade
 graph.py   48 kHz / 10 ms 图（limiter 为非听感定稿 stub）
 testdata/  synthetic_fr.csv, silence_0p5s.wav, sine_1k_0p5s.wav
