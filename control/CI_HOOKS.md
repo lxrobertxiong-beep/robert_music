@@ -1,6 +1,6 @@
 # CI 钩子纸面（目标仓 `lxrobertxiong-beep/robert_music`）
 
-> **状态**：纸面草案。**push 完成后**把 workflow 落到仓库 `.github/workflows/`。  
+> **状态**：P0 workflow 已在仓库内：`.github/workflows/lint.yml`、`unit-tests.yml`、`smoke.yml`、`control-stub.yml`。`lint` 跑 `ruff check control tests smoke`（`algo/` 目前没有可测 Python）。公开仓仍不包含 `audio-algo-eval` 评测门禁。  
 > **日期**：2026-11-02（Asia/Shanghai）  
 > **编辑源**：`/workspace/control-platform/` → 同步 `/workspace/robert_music/control/`
 
@@ -31,7 +31,7 @@
 .github/workflows/control-stub.yml
 ```
 
-可参考本地骨架：`/workspace/mlops-drafts/audio-algo-public-skeleton/.github/workflows/`。
+上述四个文件已入库。触发为 `pull_request`、`push` 到 `main`、`workflow_dispatch`；权限仅 `contents: read`，不使用 `secrets.*`。可参考本地骨架：`/workspace/mlops-drafts/audio-algo-public-skeleton/.github/workflows/`。
 
 ## `control` 与 create_job
 

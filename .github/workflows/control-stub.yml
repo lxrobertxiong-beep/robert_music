@@ -1,0 +1,28 @@
+name: control-stub
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: py_compile stub_server
+        run: python -m py_compile control/stub_server.py
+      - name: validate plugin-registry JSON
+        run: python -c "import json; json.load(open('control/plugin-registry.example.json'))"
+      - name: JOB_ENTRYPOINT_MAP keys present
+        run: |
+          grep -q 'run_eval' control/JOB_ENTRYPOINT_MAP.md
+          grep -q 'export_peq' control/JOB_ENTRYPOINT_MAP.md
+          grep -q 'pin_version' control/JOB_ENTRYPOINT_MAP.md
