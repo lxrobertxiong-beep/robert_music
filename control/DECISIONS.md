@@ -22,3 +22,7 @@
 ## 变更 2026-11-02（仓名钉死）
 
 公开仓最终钉：`lxrobertxiong-beep/robert_music`。本地工作树路径为 `/workspace/robert_music/`。CI 钩子纸面按 `robert_music` 起草，**push 完成后落地**。
+
+## 变更 2026-11-02（桌面启动项）
+
+`control/desktop/` 提供 Linux `.desktop`（安装脚本写入用户应用菜单）和 Windows `.bat`（另附 `.lnk` 生成说明）。作用是启动本地 stub（`127.0.0.1:8765`）并展示 README / curl 用法。裁定 4 不变：调控台仍是 **C**（API + CLI）。

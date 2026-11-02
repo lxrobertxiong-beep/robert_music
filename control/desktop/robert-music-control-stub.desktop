@@ -1,0 +1,19 @@
+# Local control-platform stub launcher (UI=C: API + CLI, not a GUI).
+# Double-click in this directory uses %k to find launch_stub.py beside this file.
+# For an application-menu entry, run install-linux.sh. That rewrites Exec to the
+# absolute path of launch-stub.sh and sets Path to the repository root.
+# A raw copy into ~/.local/share/applications/ loses the sibling script.
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Control stub (local)
+Name[zh_CN]=调控平台本地 stub
+GenericName=Control platform HTTP stub
+Comment=Start the local control stub on 127.0.0.1:8765 and show CLI usage
+Comment[zh_CN]=启动本地调控 stub（127.0.0.1:8765）并显示 CLI 用法
+Exec=python3 -c "import os,sys,pathlib,urllib.parse; p=sys.argv[1]; p=urllib.parse.unquote(p[7:]) if p.startswith('file://') else p; script=pathlib.Path(p).resolve().parent/'launch_stub.py'; (sys.exit('missing launcher '+str(script)) if not script.is_file() else os.execv(sys.executable,[sys.executable,str(script)]+sys.argv[2:]))" %k
+Terminal=true
+Icon=utilities-terminal
+Categories=Development;
+Keywords=control;stub;api;cli;
+StartupNotify=false

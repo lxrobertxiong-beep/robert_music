@@ -20,6 +20,8 @@
 | **A** | 自建 Web / 本地 UI | C 稳定后跟进 |
 | **B** | 挂接既有 OSS 调控 UI | 备选；需单独选型评审 |
 
+`control/desktop/` 是本 stub 的桌面启动项：拉起 `127.0.0.1:8765` 并展示 API/CLI 用法。调控台形态仍是选项 C。
+
 不在本草案推荐随机 TTS MCP 插件；已有可用连接器：**GitHub**、**Cursor Origin**（仅作仓/协作接线，不代替算法执行）。
 
 ---
@@ -202,7 +204,7 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 ## 7. 非目标（本底稿明确不做）
 
 - 不实现生产调度器 / 多租户；
-- 不在本阶段落地选项 A/B UI（**已定 C**；A/B 后置）；
+- 不在本阶段落地选项 A/B UI（**已定 C**；A/B 后置）；`control/desktop/` 只启动本地 stub 并展示 CLI 用法；
 - 不推荐或接入随机 TTS MCP；
 - 不写入假评测分数、不宣称 board/准入结果；
 - 不推送 remote、不创建正式 GitHub/Origin 仓。
