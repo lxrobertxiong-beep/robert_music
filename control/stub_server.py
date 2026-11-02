@@ -41,14 +41,15 @@ ENTRYPOINT_MAP = {
         ],
     },
     ("run_eval", "call-nr"): {
-        "workdir": "/workspace/call-nr-eval",
+        # Restricted eval repo name, not an in-repo path. The stub never executes it.
+        "workdir": "audio-algo-eval",
         "script": "scripts/run_vbd_eval.py",
         "interpreter": "python3",
-        "algo_weld": "/workspace/m1-call-nr",
+        "algo_weld": "algo/call-nr",
         "follow_on": [],
     },
     ("pin_version", "call-nr"): {
-        "workdir": "/workspace/m1-call-nr",
+        "workdir": "algo/call-nr",
         "script": "scripts/setup_pins.sh",
         "interpreter": "bash",
         "follow_on": [],

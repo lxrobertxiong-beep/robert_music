@@ -1,0 +1,6 @@
+# Runtime deps for the identity path and the soxr 16 kHz ↔ 48 kHz helpers.
+# soundfile needs the system library libsndfile (Debian/Ubuntu: libsndfile1).
+# DeepFilterNet is an optional extra (see pyproject.toml); do not install it in CI.
+numpy>=1.24
+soundfile>=0.12
+soxr>=0.3.7

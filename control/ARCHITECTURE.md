@@ -1,7 +1,7 @@
 # 音频算法调控平台 · 架构底稿（本地）
 
 > **性质**：本地纸面草案，落在 `/workspace/control-platform/`。  
-> **状态**：本地 stub 可用。公开仓 `lxrobertxiong-beep/robert_music` 已含 `control/` 与 `algo/filter-listen/`。`call-nr` 仍为盒内路径。  
+> **状态**：本地 stub 可用。公开仓 `lxrobertxiong-beep/robert_music` 已含 `control/`、`algo/filter-listen/` 与 `algo/call-nr/`。  
 > **原则**：执行用户音频算法指令；可挂接算法插件与开放平台；**不发明指标、不宣称榜单结果**。  
 > **日期**：2026-11-02（Asia/Shanghai）  
 > **裁定**：UI=**C**；公开仓 `lxrobertxiong-beep/robert_music`（同仓含 `control/`）；评测仓 `lxrobertxiong-beep/audio-algo-eval`；许可证 **Apache-2.0 + DCO**。详见 `DECISIONS.md`。
@@ -62,7 +62,7 @@
 
 | 插件 id（草案） | 本地路径 | 首批能力 |
 |-----------------|----------|----------|
-| `call-nr` | `/workspace/m1-call-nr/` | 通话上行 NS：RNNoise@v0.2、DeepFilterNet3@v0.5.6（及桌面对照脚本） |
+| `call-nr` | `algo/call-nr/` | 通话上行 NS 骨架：契约 A identity；可选 RNNoise@v0.2、DeepFilterNet3@v0.5.6 |
 | `filter-listen` | `algo/filter-listen/` | 48 kHz / 10 ms 图；FR→PEQ JSON；PEQ→WAV |
 
 真实入口以仓库内脚本为准（见 §4 与 `plugin-registry.example.json`）。
@@ -71,12 +71,12 @@
 
 | 路径 | 角色 | 可见面 |
 |------|------|--------|
-| `/workspace/call-nr-eval/` | 通话降噪小闭环（`scripts/run_vbd_eval.py`） | 受限评测侧；**准入数值未确认，禁止宣称准入/榜单** |
+| `audio-algo-eval`（受限仓，不入库） | 通话降噪小闭环（`scripts/run_vbd_eval.py`） | 受限评测侧；**准入数值未确认，禁止宣称准入/榜单** |
 | `/workspace/mlops-drafts/audio-eval-restricted-skeleton/` | 双仓 B 评测仓纸面骨架 | 受限 |
 
 **采样率路径（契约，非指标）**：
 
-- 上行通话端侧试点：**16 kHz / 256 samples**（杰理插入点契约 B；见 `m1-call-nr/dsp_io_contract.md`）。
+- 上行通话端侧试点：**16 kHz / 256 samples**（契约 B，仅文档；见 `algo/call-nr/README.md`。本仓不绑定厂商 SDK）。
 - 桌面评测/对照与滤波播放/补偿图：**48 kHz / 10 ms（480 samples）**（契约 A / filter-listen）。
 - 评测侧常见桥接：语料 16 kHz → 升 48 kHz 推理 → 降回 16 kHz 再计分（soxr）；**不得**把契约 A/B 标签混用。
 
@@ -96,7 +96,7 @@
 
 | 面 | 内容 | 参考 |
 |----|------|------|
-| **Public algo** | 自研算法、轻量 fixture、模型卡、社区模板；许可证 **Apache-2.0 + DCO**；公开仓 `lxrobertxiong-beep/robert_music`（同仓含 `control/` 与 `algo/filter-listen/`） | `mlops-drafts/audio-algo-public-skeleton/`、`community-templates/` |
+| **Public algo** | 自研算法、轻量 fixture、模型卡、社区模板；许可证 **Apache-2.0 + DCO**；公开仓 `lxrobertxiong-beep/robert_music`（同仓含 `control/`、`algo/filter-listen/` 与 `algo/call-nr/`） | `mlops-drafts/audio-algo-public-skeleton/`、`community-templates/` |
 | **Restricted eval** | 重评测、数据集清单/外链、门禁脚本；目标仓纸面 `lxrobertxiong-beep/audio-algo-eval`（短名 `audio-algo-eval`；private/受限；远程尚未创建） | `mlops-drafts/audio-eval-restricted-skeleton/`、`call-nr-eval/` |
 | **Private never-public** | 杰理 SDK、调音包、密钥、厂商闭源库 | `/home/box/private/jieli/`；工作区投放 `/workspace/jieli-sdk-drop/` **不得**进公开 Git |
 
@@ -120,7 +120,7 @@
 | `plugins[]` | array | 插件列表 |
 | `plugins[].id` | string | 稳定 id（`call-nr` / `filter-listen`） |
 | `plugins[].display_name` | string | 展示名 |
-| `plugins[].local_path` | string | 本机绝对路径（草案） |
+| `plugins[].local_path` | string | 仓内相对路径（`algo/call-nr`、`algo/filter-listen`） |
 | `plugins[].visibility` | `"public_candidate"` \| `"restricted"` \| `"private"` | 默认可发布面意图 |
 | `plugins[].license` | object | `spdx`（可 `TODO`）、`notes` |
 | `plugins[].pins` | array | 钉版：`name` / `version` / `ref`（commit 或 PyPI） |
@@ -137,7 +137,7 @@
 
 | `task_type` | 意图 | 典型绑定 |
 |-------------|------|----------|
-| `run_eval` | 跑评测适配器；写出 summary/报告**路径**；不宣称准入 | `call-nr` → `/workspace/call-nr-eval/scripts/run_vbd_eval.py` |
+| `run_eval` | 跑评测适配器；写出 summary/报告**路径**；不宣称准入 | `call-nr` → `audio-algo-eval` 的 `scripts/run_vbd_eval.py`（不入库） |
 | `export_peq` | FR→可移植 PEQ JSON（及可选 apply/metrics stub） | `filter-listen` → `scripts/generate_peq_from_fr.py` |
 | `pin_version` | 校验/记录第三方钉版（clone checkout / 包版本）；不改远程仓 | `call-nr` → `scripts/setup_pins.sh` 及 pins 元数据 |
 
@@ -151,8 +151,8 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 | `type` | `plugin_id` | workdir | 入口 |
 |--------|-------------|---------|------|
 | `export_peq` | `filter-listen` | `algo/filter-listen` | `scripts/generate_peq_from_fr.py`（follow-on: apply / export_metrics） |
-| `run_eval` | `call-nr` | `/workspace/call-nr-eval` | `scripts/run_vbd_eval.py --baseline ...`（algo weld: `/workspace/m1-call-nr`） |
-| `pin_version` | `call-nr` | `/workspace/m1-call-nr` | `scripts/setup_pins.sh` + registry pins 回显 |
+| `run_eval` | `call-nr` | `audio-algo-eval`（受限，不入库） | `scripts/run_vbd_eval.py --baseline ...`（algo weld: `algo/call-nr`） |
+| `pin_version` | `call-nr` | `algo/call-nr` | `scripts/setup_pins.sh` + registry pins 回显 |
 
 
 
@@ -162,7 +162,7 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 
 | 类别 | 可出现在公开算法仓 / 公开 release？ | 调控平台本地？ |
 |------|-------------------------------------|----------------|
-| `m1-call-nr` 自研脚本与契约文档 | 候选（合规评审后） | 是 |
+| `algo/call-nr` 自研脚本与契约文档 | 是（本仓骨架） | 是 |
 | `algo/filter-listen` 自研 PEQ/图 | 是（Apache-2.0 骨架，limiter **非听感定稿**） | 是 |
 | `call-nr-eval` 脚本与 mini fixture | 评测仓纸面 `audio-algo-eval`（受限） | 是 |
 | `/home/box/private/jieli/**` | **否** | 仅私有联调 |
@@ -182,7 +182,7 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 - **不得**带入 `jieli-sdk-drop`、`*.key`、`private/jieli`、`DynamicEQPro.a`；
 - soft limiter / DRC 为工程 stub，**非听感定稿**。
 
-`call-nr` 评测入口留在受限评测侧（`/workspace/call-nr-eval/` → 目标 `lxrobertxiong-beep/audio-algo-eval`）；算法焊接指向 `/workspace/m1-call-nr/`（进 `robert_music`），不把评测仓当作公开算法包主体。
+`call-nr` 评测入口留在受限评测侧（目标 `lxrobertxiong-beep/audio-algo-eval`，不拷进本仓）；算法焊接指向本仓 `algo/call-nr/`，不把评测仓当作公开算法包主体。
 
 ---
 
@@ -194,8 +194,8 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 | `/workspace/mlops-drafts/audio-algo-public-skeleton/` | 公开算法仓目录骨架 |
 | `/workspace/mlops-drafts/audio-eval-restricted-skeleton/` | 受限评测仓纸面 |
 | `/workspace/community-templates/` | CoC / CONTRIBUTING / SECURITY / 公私边界 |
-| `/workspace/m1-call-nr/`、`algo/filter-listen/` | 首批插件；filter-listen 已入库，call-nr 仍为盒内路径 |
-| `/workspace/call-nr-eval/` | 首个 `run_eval` 适配器 |
+| `algo/call-nr/`、`algo/filter-listen/` | 首批插件均已入库 |
+| `lxrobertxiong-beep/audio-algo-eval` | 首个 `run_eval` 适配器（受限，不入库） |
 
 ---
 

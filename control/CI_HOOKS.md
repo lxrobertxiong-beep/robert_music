@@ -1,6 +1,6 @@
 # CI 钩子纸面（目标仓 `lxrobertxiong-beep/robert_music`）
 
-> **状态**：P0 workflow 已在仓库内：`.github/workflows/lint.yml`、`unit-tests.yml`、`smoke.yml`、`control-stub.yml`。`lint` 跑 `ruff check control tests smoke algo`。公开仓仍不包含 `audio-algo-eval` 评测门禁。`filter-listen` 单测在仓库根 `tests/test_filter_listen_*.py`，只依赖标准库。  
+> **状态**：P0 workflow 已在仓库内：`.github/workflows/lint.yml`、`unit-tests.yml`、`smoke.yml`、`control-stub.yml`。`lint` 跑 `ruff check control tests smoke algo`。公开仓仍不包含 `audio-algo-eval` 评测门禁。`filter-listen` 单测在仓库根 `tests/test_filter_listen_*.py`，只依赖标准库。`call-nr` 单测另需 `algo/call-nr/requirements.txt`（numpy、soundfile、soxr）与系统库 `libsndfile1`。
 > **日期**：2026-11-02（Asia/Shanghai）  
 > **编辑源**：`/workspace/control-platform/` → 同步 `/workspace/robert_music/control/`
 

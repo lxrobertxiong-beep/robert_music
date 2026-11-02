@@ -1,15 +1,15 @@
 {
   "schema_version": "0.1.0",
-  "description": "Example registry for the audio-algo control platform. Target repos: lxrobertxiong-beep/robert_music (algo+control) and lxrobertxiong-beep/audio-algo-eval (eval). License Apache-2.0+DCO. filter-listen paths are repo-relative (algo/filter-listen). call-nr paths stay box-local until that plugin lands. Do not invent metrics.",
+  "description": "Example registry for the audio-algo control platform. Target repos: lxrobertxiong-beep/robert_music (algo+control) and lxrobertxiong-beep/audio-algo-eval (eval). License Apache-2.0+DCO. filter-listen local_path is algo/filter-listen. call-nr local_path is the in-repo relative path algo/call-nr. Do not invent metrics or claim admission results.",
   "plugins": [
     {
       "id": "call-nr",
       "display_name": "Call noise reduction (M1)",
-      "local_path": "/workspace/m1-call-nr",
+      "local_path": "algo/call-nr",
       "visibility": "public_candidate",
       "license": {
         "spdx": "Apache-2.0",
-        "notes": "Self-authored: Apache-2.0 + DCO. Third-party pins keep upstream licenses (RNNoise BSD-like / DeepFilterNet upstream). Remote paper target only; not pushed."
+        "notes": "Self-authored skeleton: Apache-2.0 + DCO. Optional RNNoise and DeepFilterNet pins keep their upstream licenses and are not vendored."
       },
       "pins": [
         {
@@ -25,22 +25,16 @@
       ],
       "entrypoints": [
         {
-          "name": "run_rnnoise",
+          "name": "infer",
           "kind": "cli_script",
-          "path": "scripts/run_rnnoise.sh",
-          "args_hint": "<in.wav> [out.wav]"
-        },
-        {
-          "name": "run_dfn3",
-          "kind": "cli_script",
-          "path": "scripts/run_dfn3.sh",
-          "args_hint": "<in.wav> [out_dir]"
+          "path": "scripts/infer.py",
+          "args_hint": "--backend identity|rnnoise|deepfilternet -i <in.wav> -o <out.wav>"
         },
         {
           "name": "setup_pins",
           "kind": "cli_script",
           "path": "scripts/setup_pins.sh",
-          "args_hint": "(no required args; clones/checks pins into third_party)"
+          "args_hint": "(prints pin metadata; does not download weights)"
         }
       ],
       "task_bindings": [
@@ -48,10 +42,10 @@
         "pin_version"
       ],
       "eval_adapter": {
-        "path": "/workspace/call-nr-eval",
+        "path": null,
         "entrypoint": "scripts/run_vbd_eval.py",
         "args_hint": "--baseline none|rnnoise|deepfilternet [--config configs/default.yaml]",
-        "notes": "Admission thresholds unset; do not claim pass/board results. Target eval repo paper name audio-algo-eval (private/restricted).",
+        "notes": "Restricted eval repo lxrobertxiong-beep/audio-algo-eval. Not vendored in this public repo. Admission thresholds unset; do not claim pass or board results. Algorithm code lives at algo/call-nr.",
         "repo": "lxrobertxiong-beep/audio-algo-eval",
         "home": "https://github.com/lxrobertxiong-beep/audio-algo-eval"
       },

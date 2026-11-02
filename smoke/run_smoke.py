@@ -19,6 +19,23 @@ def main() -> int:
         if key not in map_text:
             print(f"missing map key: {key}", file=sys.stderr)
             return 1
+    plugins = {item["id"]: item for item in registry.get("plugins", [])}
+    call_nr = plugins.get("call-nr")
+    if not call_nr or call_nr.get("local_path") != "algo/call-nr":
+        print("call-nr local_path must be in-repo algo/call-nr", file=sys.stderr)
+        return 1
+    plugin_root = ROOT / "algo" / "call-nr"
+    if not (plugin_root / "PLUGIN.json").is_file():
+        print("missing algo/call-nr/PLUGIN.json", file=sys.stderr)
+        return 1
+    for entry in call_nr.get("entrypoints", []):
+        rel = entry.get("path", "")
+        if rel.startswith("/") or not (plugin_root / rel).is_file():
+            print(f"call-nr entrypoint not in repo: {rel}", file=sys.stderr)
+            return 1
+    if "algo/call-nr" not in map_text or "/workspace/m1-call-nr" in map_text:
+        print("JOB_ENTRYPOINT_MAP call-nr workdir is not in-repo", file=sys.stderr)
+        return 1
     spec = importlib.util.spec_from_file_location(
         "stub_server", ROOT / "control" / "stub_server.py"
     )
