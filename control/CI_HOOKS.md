@@ -1,6 +1,6 @@
 # CI 钩子纸面（目标仓 `lxrobertxiong-beep/robert_music`）
 
-> **状态**：P0 workflow 已在仓库内：`.github/workflows/lint.yml`、`unit-tests.yml`、`smoke.yml`、`control-stub.yml`。`lint` 跑 `ruff check control tests smoke algo`。公开仓仍不包含 `audio-algo-eval` 评测门禁。`filter-listen` 单测在仓库根 `tests/test_filter_listen_*.py`，只依赖标准库。`call-nr` 单测另需 `algo/call-nr/requirements.txt`（numpy、soundfile、soxr）与系统库 `libsndfile1`。
+> **状态**：P0 workflow 已在仓库内：`.github/workflows/lint.yml`、`unit-tests.yml`、`smoke.yml`、`control-stub.yml`。`lint` 跑 `ruff check control tests smoke algo`。公开仓仍不包含 `audio-algo-eval` 评测门禁。`filter-listen` 单测在仓库根 `tests/test_filter_listen_*.py`，只依赖标准库。`call-nr` 单测另需 `algo/call-nr/requirements.txt`（numpy、soundfile、soxr）与系统库 `libsndfile1`。`smoke` 在控制面 dry-run 之后再跑 `algo/filter-listen/scripts/run_demo.py`。
 > **日期**：2026-11-02（Asia/Shanghai）  
 > **编辑源**：`/workspace/control-platform/` → 同步 `/workspace/robert_music/control/`
 
@@ -17,7 +17,7 @@
 |-----|------|--------|--------------|
 | `lint` | pull_request, push@main | `ruff check`（或等价）于 `algo/`、`control/` 可测 Python | 是 |
 | `unit` | 同上 | `pytest` 轻量单测（公开 fixture only） | 是 |
-| `smoke` | 同上 | 跑 `control` 无关的算法 smoke **或** `filter-listen` 级最小脚本（仓内路径落地后钉死） | 是 |
+| `smoke` | 同上 | `python smoke/run_smoke.py`，再跑 `python algo/filter-listen/scripts/run_demo.py`（stdlib，`--no-autoeq`） | 是 |
 | `control-stub-syntax` | 同上 | `python -m py_compile control/stub_server.py`；校验 `plugin-registry.example.json` JSON | 是 |
 
 **明确不进 P0 PR 门禁**：全集评测、主观听感、大模型下载、需要密钥的厂商 SDK、`execute=true` 真跑 job。

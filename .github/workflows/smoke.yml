@@ -21,3 +21,5 @@ jobs:
           python-version: "3.11"
       - name: Run smoke (control stub dry-run)
         run: python smoke/run_smoke.py
+      - name: Run filter-listen offline demo (stdlib, --no-autoeq)
+        run: python algo/filter-listen/scripts/run_demo.py
