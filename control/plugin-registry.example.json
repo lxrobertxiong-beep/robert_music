@@ -71,6 +71,12 @@
           "args_hint": "(prints pin metadata; does not download weights)"
         },
         {
+          "name": "audition_ui",
+          "kind": "cli_script",
+          "path": "scripts/audition_ui.py",
+          "args_hint": "(optional Gradio; not installed in CI; local WAV audition, not an eval-admission claim)"
+        },
+        {
           "name": "smoke_missing_weights",
           "kind": "cli_script",
           "path": "scripts/smoke_missing_weights.sh",

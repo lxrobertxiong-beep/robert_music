@@ -20,6 +20,9 @@ deepfilternet = [
   "deepfilternet==0.5.6",
   "deepfilterlib==0.5.6",
 ]
+ui = [
+  "gradio>=4.44",
+]
 
 [project.scripts]
 call-nr-infer = "call_nr.cli:main"

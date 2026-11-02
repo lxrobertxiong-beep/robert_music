@@ -60,6 +60,27 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def run_waveform(backend_name: str, input_path: Path, output_path: Path) -> str:
+    """Run one waveform backend and write a contract-A WAV.
+
+    Same path the CLI uses for ``identity``, ``passthrough``, ``rnnoise``,
+    ``deepfilternet``, and ``gtcrn``. ``silero_vad`` is not a waveform
+    backend. Raises ``BackendUnavailable`` when an optional pin is missing
+    (CLI exit 3) and ``OSError`` / ``ValueError`` / ``RuntimeError`` for a
+    bad file (CLI exit 2).
+    """
+    samples, sample_rate = read_wav(input_path)
+    contract_a = to_contract_a(samples, sample_rate)
+    backend = get_backend(backend_name)
+    backend.reset()
+    rendered = backend.process(contract_a, SAMPLE_RATE_A)
+    write_wav(output_path, rendered, SAMPLE_RATE_A)
+    return (
+        f"wrote {output_path} contract={CONTRACT_A_ID} backend={backend_name} "
+        f"samples={len(rendered)} sr={SAMPLE_RATE_A}"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -81,23 +102,14 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stdout,
             )
             return 0
-        samples, sample_rate = read_wav(args.input)
-        contract_a = to_contract_a(samples, sample_rate)
-        backend = get_backend(args.backend)
-        backend.reset()
-        rendered = backend.process(contract_a, SAMPLE_RATE_A)
-        write_wav(args.output, rendered, SAMPLE_RATE_A)
+        message = run_waveform(args.backend, args.input, args.output)
     except BackendUnavailable as exc:
         print(str(exc), file=sys.stderr)
         return 3
     except (OSError, ValueError, RuntimeError) as exc:
         print(str(exc), file=sys.stderr)
         return 2
-    print(
-        f"wrote {args.output} contract={CONTRACT_A_ID} backend={args.backend} "
-        f"samples={len(rendered)} sr={SAMPLE_RATE_A}",
-        file=sys.stdout,
-    )
+    print(message, file=sys.stdout)
     return 0
 
 

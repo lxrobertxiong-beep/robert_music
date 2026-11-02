@@ -1,0 +1,4 @@
+# Optional local audition UI (Gradio). Not installed by CI.
+# CI installs requirements-dev.txt and algo/call-nr/requirements.txt only.
+-r requirements.txt
+gradio>=4.44

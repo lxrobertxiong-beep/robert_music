@@ -18,7 +18,7 @@
 - 不把受限评测仓、语料大集、权重或上游完整树拷进本树。GTCRN 的 `*.tar` 与 Silero 的 JIT 只放在本机路径。
 - 不实现完整 AEC。控制字段 `ns_enable`、`vad_prob`、`aec_ref_pcm_*` 仍是占位，本骨架不消费它们。Silero VAD 只另写概率 CSV 和时间戳 JSON，不把 `vad_prob` 填进控制面。
 - 延迟预算 `budget_alg_ms`、`budget_buffer_ms`、`budget_total_uplink_ms` 留给平台回填，这里不填数字。
-- CI 只跑 identity 与契约 A。CI **不**安装 torch，**不**下载权重，**不**跑真实 GTCRN / Silero 推理。
+- CI 只跑 identity 与契约 A。CI **不**安装 torch，**不**安装 Gradio，**不**下载权重，**不**跑真实 GTCRN / Silero 推理。
 
 ## I/O 与流式注意
 
@@ -50,6 +50,17 @@ bash algo/call-nr/scripts/setup_pins.sh
 ```
 
 `identity` 成功时打印一行 `contract=A_48k_480`，并写出与输入等长（在 48 kHz 时间轴上）的 WAV。`--backend passthrough` 与 identity 同一条路径。
+
+### 桌面试听
+
+可选 Gradio 页面，不进 CI。上传 WAV 或填本机路径，在 `identity` / `passthrough` / `rnnoise` / `deepfilternet` / `gtcrn` 里选一个，并排听原声和处理后的 WAV，并下载结果。缺依赖或权重时状态栏显示与 CLI **exit 3** 相同的说明（环境变量见下文），不下载权重。这不是评测准入。Silero VAD 仍用 CLI。
+
+```bash
+pip install -r algo/call-nr/requirements-ui.txt
+python algo/call-nr/scripts/audition_ui.py
+```
+
+浏览器打开本机地址（默认 <http://127.0.0.1:7860>）。
 
 干净树上确认 `gtcrn` / `silero_vad` 缺权重时退出码为 3（不下载权重、不安装 torch）：
 
@@ -128,7 +139,7 @@ python algo/call-nr/scripts/run_silero_vad.py -i in.wav -o out/vad_probs.csv
 
 可选的 `gtcrn` 与 `silero_vad` 在缺权重、缺本地 checkout，或缺 `torch` 时退出码为 **3**。stderr 写明钉的 commit，以及该设置的环境变量。本文只说明路径和这个退出码。不报告 SI-SDR 或 PESQ，也不写评测准入。权重和上游树留在本机，不进 Git。
 
-CI（`.github/workflows/unit-tests.yml`）只安装 `requirements-dev.txt` 和 `algo/call-nr/requirements.txt`，然后 `pytest -q`。不安装 torch，不下载权重，不跑真实 GTCRN / Silero 推理。同一退出码由 `tests/test_call_nr_optional.py` 的 `test_cli_optional_backends_exit_3_without_weights` 覆盖。缺包由 `test_gtcrn_missing_torch_is_explicit` 和 `test_silero_missing_torch_is_explicit` 覆盖（仅当当前解释器没有 torch）。`scripts/smoke_missing_weights.sh` 是给人复制的同一条失败路径。`scripts/check_local_weights_ready.sh` 在干净树上同样是 exit 3；本机权重和 torch 都齐时才 exit 0。workflow 不因为这两段脚本去安装 torch 或下载权重。
+CI（`.github/workflows/unit-tests.yml`）只安装 `requirements-dev.txt` 和 `algo/call-nr/requirements.txt`，然后 `pytest -q`。不安装 torch，不安装 Gradio（`requirements-ui.txt`），不下载权重，不跑真实 GTCRN / Silero 推理。同一退出码由 `tests/test_call_nr_optional.py` 的 `test_cli_optional_backends_exit_3_without_weights` 覆盖。缺包由 `test_gtcrn_missing_torch_is_explicit` 和 `test_silero_missing_torch_is_explicit` 覆盖（仅当当前解释器没有 torch）。`scripts/smoke_missing_weights.sh` 是给人复制的同一条失败路径。`scripts/check_local_weights_ready.sh` 在干净树上同样是 exit 3；本机权重和 torch 都齐时才 exit 0。workflow 不因为这两段脚本去安装 torch 或下载权重。
 
 ### 无权重：验证失败路径
 
