@@ -20,7 +20,7 @@
 |--------|-------------|---------|-----------------|----------|
 | `export_peq` | `filter-listen` | `algo/filter-listen`（相对仓库根） | `python3 scripts/generate_peq_from_fr.py --fr {fr} [--target {target}] [--no-autoeq] -o {output}` | 后续可选：`scripts/apply_peq_wav.py`、`scripts/export_metrics.py`（见 `follow_on`） |
 | `run_eval` | `call-nr` | `audio-algo-eval`（受限评测仓，**不**拷进本仓） | `python3 scripts/run_vbd_eval.py --baseline {baseline}` | 算法侧：`algo/call-nr`；**不宣称准入** |
-| `pin_version` | `call-nr` | `algo/call-nr` | `bash scripts/setup_pins.sh` | 回显 registry `pins[]`（stub 默认回显 + 命令模板）；CI 不下载权重 |
+| `pin_version` | `call-nr` | `algo/call-nr` | `bash scripts/setup_pins.sh` | 回显 registry `pins[]`（含可选 GTCRN / Silero VAD）；stub 只回显 + 命令模板；CI 不下载权重、不安装 torch |
 
 ---
 

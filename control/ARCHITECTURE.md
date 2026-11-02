@@ -62,7 +62,7 @@
 
 | 插件 id（草案） | 本地路径 | 首批能力 |
 |-----------------|----------|----------|
-| `call-nr` | `algo/call-nr/` | 通话上行 NS 骨架：契约 A identity；可选 RNNoise@v0.2、DeepFilterNet3@v0.5.6 |
+| `call-nr` | `algo/call-nr/` | 通话上行 NS 骨架：契约 A identity；可选 RNNoise@v0.2、DeepFilterNet3@v0.5.6、GTCRN@502ebfab、Silero VAD@066409f（权重不入库，不宣称准入） |
 | `filter-listen` | `algo/filter-listen/` | 48 kHz / 10 ms 图；FR→PEQ JSON；PEQ→WAV |
 
 真实入口以仓库内脚本为准（见 §4 与 `plugin-registry.example.json`）。

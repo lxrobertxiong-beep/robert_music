@@ -1,6 +1,10 @@
 # Runtime deps for the identity path and the soxr 16 kHz ↔ 48 kHz helpers.
 # soundfile needs the system library libsndfile (Debian/Ubuntu: libsndfile1).
-# DeepFilterNet is an optional extra (see pyproject.toml); do not install it in CI.
+# Optional pins are not installed here and must not be installed in CI:
+#   deepfilternet==0.5.6 (see pyproject.toml extra)
+#   GTCRN: torch + einops, plus CALL_NR_GTCRN_WEIGHTS / GTCRN_ROOT
+#   Silero VAD: torch, plus SILERO_VAD_ROOT
+# Do not vendor those trees or their weight files.
 numpy>=1.24
 soundfile>=0.12
 soxr>=0.3.7

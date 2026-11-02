@@ -21,5 +21,10 @@ node_modules/
 **/DynamicEQPro.a
 **/DynamicEQPro*
 
-# call-nr 可选上游 checkout（RNNoise 等），不 vendor
+# call-nr 可选上游 checkout（RNNoise / GTCRN / Silero 等）与权重，不 vendor
 algo/call-nr/third_party/
+**/*.tar
+**/checkpoints/
+**/silero_vad.jit
+**/silero_vad.onnx
+**/*silero_vad*.safetensors

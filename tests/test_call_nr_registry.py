@@ -55,9 +55,16 @@ def test_plugin_json_pins_match_registry():
     by_name = {pin["name"]: pin for pin in meta["pins"]}
     assert by_name["RNNoise"]["ref"] == "904a876dce1f9ab8860c0a5000ed151f9f6eef58"
     assert "978576aa8400552a4ce9730838c635aa30db5e61" in by_name["DeepFilterNet3"]["ref"]
+    assert by_name["GTCRN"]["ref"] == "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73"
+    assert by_name["Silero VAD"]["ref"] == "066409f3d9db45a30d21dfcbf9147826ffdd7052"
+    assert by_name["GTCRN"]["checkpoint"] == "checkpoints/model_trained_on_dns3.tar"
+    assert "CALL_NR_GTCRN_WEIGHTS" in by_name["GTCRN"]["weights_env"]
+    assert by_name["Silero VAD"]["code_env"] == "SILERO_VAD_ROOT"
     reg_by_name = {pin["name"]: pin for pin in plugin["pins"]}
     assert by_name["RNNoise"]["ref"] in reg_by_name["RNNoise"]["ref"]
     assert by_name["DeepFilterNet3"]["ref"] in reg_by_name["DeepFilterNet3"]["ref"]
+    assert by_name["GTCRN"]["ref"] in reg_by_name["GTCRN"]["ref"]
+    assert by_name["Silero VAD"]["ref"] in reg_by_name["Silero VAD"]["ref"]
 
 
 def test_job_map_and_stub_use_in_repo_algorithm_workdir():

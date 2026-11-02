@@ -20,7 +20,7 @@
 | `smoke` | 同上 | `python smoke/run_smoke.py`，再跑 `python algo/filter-listen/scripts/run_demo.py`（stdlib，`--no-autoeq`） | 是 |
 | `control-stub-syntax` | 同上 | `python -m py_compile control/stub_server.py`；校验 `plugin-registry.example.json` JSON | 是 |
 
-**明确不进 P0 PR 门禁**：全集评测、主观听感、大模型下载、需要密钥的厂商 SDK、`execute=true` 真跑 job。
+**明确不进 P0 PR 门禁**：全集评测、主观听感、大模型下载、GTCRN / Silero 权重与 torch、需要密钥的厂商 SDK、`execute=true` 真跑 job。
 
 ## 建议 workflow 文件名（落地时）
 

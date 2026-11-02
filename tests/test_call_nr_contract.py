@@ -66,7 +66,7 @@ def test_passthrough_alias_matches_identity():
     assert isinstance(get_backend("passthrough"), PassThroughBackend)
     assert np.array_equal(identity, passed)
     with pytest.raises(ValueError, match="unknown backend"):
-        get_backend("gtcrn")
+        get_backend("no-such-backend")
 
 
 def test_wav_downmix_and_float_roundtrip(tmp_path):

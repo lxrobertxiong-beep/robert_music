@@ -3,7 +3,7 @@
   "display_name": "Call noise reduction",
   "license": {
     "spdx": "Apache-2.0",
-    "notes": "Self-authored skeleton: Apache-2.0 + DCO. Optional RNNoise and DeepFilterNet pins keep their upstream licenses and are not vendored."
+    "notes": "Self-authored skeleton: Apache-2.0 + DCO. Optional RNNoise, DeepFilterNet, GTCRN, and Silero VAD pins keep their upstream licenses (GTCRN and Silero VAD trees state MIT) and are not vendored. Weights stay on a local path. Not an eval-admission claim."
   },
   "contracts": {
     "A": {
@@ -41,6 +41,29 @@
       "ref": "978576aa8400552a4ce9730838c635aa30db5e61",
       "pypi": "deepfilternet==0.5.6",
       "optional": true
+    },
+    {
+      "name": "GTCRN",
+      "version": "502ebfab",
+      "ref": "502ebfab64da7c4a9af78dcb9c6ceef1ebb01c73",
+      "url": "https://github.com/Xiaobin-Rong/gtcrn",
+      "checkpoint": "checkpoints/model_trained_on_dns3.tar",
+      "weights_env": ["CALL_NR_GTCRN_WEIGHTS", "GTCRN_CHECKPOINT"],
+      "code_env": "GTCRN_ROOT",
+      "cache": "~/.cache/call-nr/gtcrn/model_trained_on_dns3.tar",
+      "optional": true,
+      "notes": "No upstream release tag. Short pin 502ebfab. Weights are not vendored. Not an eval-admission claim."
+    },
+    {
+      "name": "Silero VAD",
+      "version": "v6.2.3-8-g066409f",
+      "ref": "066409f3d9db45a30d21dfcbf9147826ffdd7052",
+      "url": "https://github.com/snakers4/silero-vad",
+      "jit": "src/silero_vad/data/silero_vad.jit",
+      "code_env": "SILERO_VAD_ROOT",
+      "cache": "~/.cache/call-nr/silero-vad/",
+      "optional": true,
+      "notes": "v6.2.x line: 8 commits after tag v6.2.3, not the v6.2.3 tag itself. JIT is not vendored. Not an eval-admission claim."
     }
   ],
   "entrypoints": [
@@ -48,7 +71,13 @@
       "name": "infer",
       "kind": "cli_script",
       "path": "scripts/infer.py",
-      "args_hint": "--backend identity|rnnoise|deepfilternet -i <in.wav> -o <out.wav>"
+      "args_hint": "--backend identity|passthrough|rnnoise|deepfilternet|gtcrn|silero_vad -i <in.wav> -o <out>"
+    },
+    {
+      "name": "run_silero_vad",
+      "kind": "cli_script",
+      "path": "scripts/run_silero_vad.py",
+      "args_hint": "-i <in.wav> -o <vad_probs.csv>  (also writes speech_timestamps.json)"
     },
     {
       "name": "setup_pins",
