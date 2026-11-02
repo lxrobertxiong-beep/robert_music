@@ -133,6 +133,43 @@ def test_cascade_magnitude_sums_lp_hp():
     assert _finite(frame)
 
 
+# Frozen before M4. Default per_bin on synthetic_fr.csv + identity PEQ vs harman_like.
+_SYNTHETIC_IDENTITY_PER_BIN_RMSE = 1.642059223266621
+
+
+def _load_fr_fit():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "generate_peq_from_fr_for_rmse",
+        MODULE / "scripts" / "generate_peq_from_fr.py",
+    )
+    assert spec and spec.loader
+    fr_fit = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fr_fit)
+    return fr_fit
+
+
+def _reference_third_octave_rmse(freqs, measured, target) -> float:
+    """Independent nearest-band mean dB RMSE for the ISO-ish 20 Hz–20 kHz grid."""
+    sums_m: dict[int, float] = {}
+    sums_t: dict[int, float] = {}
+    counts: dict[int, int] = {}
+    for freq, level_m, level_t in zip(freqs, measured, target, strict=True):
+        freq_hz = float(freq)
+        if freq_hz < 20.0 or freq_hz > 20000.0:
+            continue
+        k = math.floor(math.log10(freq_hz / 1000.0) * 10.0 + 0.5)
+        if k < -17 or k > 13:
+            continue
+        sums_m[k] = sums_m.get(k, 0.0) + float(level_m)
+        sums_t[k] = sums_t.get(k, 0.0) + float(level_t)
+        counts[k] = counts.get(k, 0) + 1
+    errors = [(sums_m[k] - sums_t[k]) / counts[k] for k in sorted(counts)]
+    assert errors
+    return math.sqrt(sum(err * err for err in errors) / len(errors))
+
+
 def test_fixture_fr_rmse_identity_is_zero_and_lowpass_moves_it():
     from algo.filter_listen import peq as peq_mod
 
@@ -158,6 +195,96 @@ def test_fixture_fr_rmse_identity_is_zero_and_lowpass_moves_it():
     )
     assert math.isfinite(scored)
     assert scored > 1.0
+
+
+def test_per_bin_default_matches_frozen_synthetic_fixture():
+    from algo.filter_listen import peq as peq_mod
+
+    fr_fit = _load_fr_fit()
+    freqs, measured = fr_fit.load_fr_csv(MODULE / "testdata" / "synthetic_fr.csv")
+    target = fr_fit.target_curve(freqs, "harman_like")
+    identity = {"sample_rate": 48000, "preamp_db": 0.0, "bands": []}
+    per_bin = peq_mod.fr_rmse_db(freqs, measured, target, identity)
+    explicit = peq_mod.fr_rmse_db(freqs, measured, target, identity, mode="per_bin")
+    assert per_bin == explicit
+    assert abs(per_bin - _SYNTHETIC_IDENTITY_PER_BIN_RMSE) < 1e-12
+
+
+def test_third_octave_reproducible_on_synthetic_csv_and_hand_bands():
+    from algo.filter_listen import peq as peq_mod
+
+    identity = {"sample_rate": 48000, "preamp_db": 0.0, "bands": []}
+    # Two bins in the 1 kHz band: mean dB error is 1, per-bin RMSE is sqrt(2).
+    pair_f = [1000.0, 1001.0]
+    pair_m = [0.0, 2.0]
+    pair_t = [0.0, 0.0]
+    third = peq_mod.fr_rmse_db(pair_f, pair_m, pair_t, identity, mode="third_octave")
+    again = peq_mod.fr_rmse_db(pair_f, pair_m, pair_t, identity, mode="third_octave")
+    assert third == again
+    assert abs(third - 1.0) < 1e-12
+    per_bin = peq_mod.fr_rmse_db(pair_f, pair_m, pair_t, identity)
+    assert abs(per_bin - math.sqrt(2.0)) < 1e-12
+
+    # Below the 20 Hz aggregation floor: ignored by third_octave, kept by per_bin.
+    wide_f = [10.0, 1000.0]
+    wide_m = [100.0, 0.0]
+    wide_t = [0.0, 0.0]
+    assert abs(peq_mod.fr_rmse_db(wide_f, wide_m, wide_t, identity, mode="third_octave")) < 1e-12
+    assert peq_mod.fr_rmse_db(wide_f, wide_m, wide_t, identity) > 50.0
+
+    fr_fit = _load_fr_fit()
+    freqs, measured = fr_fit.load_fr_csv(MODULE / "testdata" / "synthetic_fr.csv")
+    target = fr_fit.target_curve(freqs, "harman_like")
+    lowpass = {
+        "sample_rate": 48000,
+        "preamp_db": 0.0,
+        "bands": [{"fc": 1000.0, "Q": 0.707, "gain": 0.0, "type": "lowpass"}],
+    }
+    first = peq_mod.fr_rmse_db(freqs, measured, target, lowpass, mode="third_octave")
+    second = peq_mod.fr_rmse_db(freqs, measured, target, lowpass, mode="third_octave")
+    assert first == second
+    assert math.isfinite(first)
+    cascade = peq_mod.peq_from_dict(lowpass)
+    compensated = [
+        level + cascade.magnitude_db(freq)
+        for freq, level in zip(freqs, measured, strict=True)
+    ]
+    expected = _reference_third_octave_rmse(freqs, compensated, target)
+    assert abs(first - expected) < 1e-12
+    centers, mean_m, mean_t = peq_mod.third_octave_paired_means(freqs, compensated, target)
+    assert len(centers) == len(peq_mod.third_octave_centers())
+    assert len(mean_m) == len(mean_t) == 31
+    assert abs(peq_mod.fr_rmse_db(freqs, measured, target, lowpass) - first) > 1e-3
+
+    with pytest.raises(ValueError, match="unknown fr_rmse mode"):
+        peq_mod.fr_rmse_db(pair_f, pair_m, pair_t, identity, mode="smoothed")
+
+
+def test_welch_transfer_reports_constant_gain_and_identity_probe():
+    from algo.filter_listen import peq as peq_mod
+
+    probe = peq_mod.synthesize_broadband_probe(48000.0, seconds=0.25)
+    again = peq_mod.synthesize_broadband_probe(48000.0, seconds=0.25)
+    assert probe == again
+    gain_db = 6.0
+    scaled = [sample * (10.0 ** (gain_db / 20.0)) for sample in probe]
+    freqs, levels = peq_mod.estimate_transfer_db_welch(probe, scaled, 48000.0)
+    assert len(freqs) == len(levels)
+    assert len(freqs) > 10
+    assert max(abs(level - gain_db) for level in levels) < 1e-6
+    flat = [0.0 for _ in freqs]
+    score = peq_mod.curve_rmse_db(freqs, levels, flat, mode="per_bin", sample_rate=48000.0)
+    assert abs(score - gain_db) < 1e-6
+    copy_freqs, copy_levels = peq_mod.estimate_transfer_db_welch(probe, probe, 48000.0)
+    assert max(abs(level) for level in copy_levels) < 1e-9
+    third = peq_mod.curve_rmse_db(
+        copy_freqs,
+        copy_levels,
+        [0.0 for _ in copy_freqs],
+        mode="third_octave",
+        sample_rate=48000.0,
+    )
+    assert abs(third) < 1e-9
 
 
 def _lfsr(n: int, scale: float = 0.1) -> list[float]:
