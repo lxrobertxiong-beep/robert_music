@@ -45,6 +45,10 @@ def test_registry_points_at_in_repo_module():
     assert names["generate_peq_from_fr"] == "scripts/generate_peq_from_fr.py"
     assert names["apply_peq_wav"] == "scripts/apply_peq_wav.py"
     assert names["export_metrics"] == "scripts/export_metrics.py"
+    assert names["run_demo"] == "scripts/run_demo.py"
+    for item in plugin["entrypoints"]:
+        assert (MODULE / item["path"]).is_file()
+    assert "lowpass" in plugin["notes"] and "highpass" in plugin["notes"]
     never = plugin["oss_boundary"]["never_bundle"]
     assert "/home/box/private/jieli/" in never
     assert "**/DynamicEQPro.a" in never

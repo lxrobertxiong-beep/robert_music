@@ -146,7 +146,7 @@ Job 状态机（草案）：`queued` → `running` → `succeeded` \| `failed` \
 
 ### 4.1 create_job → 入口映射
 
-完整纸面表见 **`JOB_ENTRYPOINT_MAP.md`**。Stub `POST /v1/jobs` 按 `type`+`plugin_id` 解析并返回 `resolved_entrypoint`（默认 dry-run，不执行子进程）：
+完整纸面表见 **`JOB_ENTRYPOINT_MAP.md`**。Stub `POST /v1/jobs` 按 `type`+`plugin_id` 解析并返回 `resolved_entrypoint`（默认 dry-run）。`execute=true` 只在本仓子进程跑 `export_peq` 与 `pin_version`（不下载权重）；`run_eval` 仍拒绝执行：
 
 | `type` | `plugin_id` | workdir | 入口 |
 |--------|-------------|---------|------|

@@ -65,6 +65,9 @@ def test_plugin_json_pins_match_registry():
     assert by_name["DeepFilterNet3"]["ref"] in reg_by_name["DeepFilterNet3"]["ref"]
     assert by_name["GTCRN"]["ref"] in reg_by_name["GTCRN"]["ref"]
     assert by_name["Silero VAD"]["ref"] in reg_by_name["Silero VAD"]["ref"]
+    assert set(reg_by_name) == set(by_name)
+    assert reg_by_name["GTCRN"]["checkpoint"] == by_name["GTCRN"]["checkpoint"]
+    assert reg_by_name["Silero VAD"]["code_env"] == by_name["Silero VAD"]["code_env"]
 
 
 def test_job_map_and_stub_use_in_repo_algorithm_workdir():

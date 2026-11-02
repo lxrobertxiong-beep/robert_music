@@ -23,7 +23,7 @@
 | `JOB_ENTRYPOINT_MAP.md` | create_job → CLI/脚本入口映射表 |
 | `plugin-registry.example.json` | 首插件注册表示例：`call-nr`、`filter-listen` |
 | `openapi-stub.yaml` | OpenAPI 3.0 stub（含 `resolved_entrypoint`） |
-| `stub_server.py` | 本地 stub：`8765`；`POST /v1/jobs` 解析入口（默认 dry-run） |
+| `stub_server.py` | 本地 stub：`8765`；`POST /v1/jobs` 默认 dry-run；`execute=true` 只跑 `export_peq` 与 `pin_version` |
 
 ## 任务类型（固定枚举）
 
@@ -64,6 +64,16 @@ curl -s -X POST http://127.0.0.1:8765/v1/jobs \
   | python3 -m json.tool
 ```
 
+从仓库根（`control/` 的上一级）启动时，`execute=true` 会跑本地安全入口，不下载权重。`run_eval?execute=true` 仍是 400 `execute_disabled`。
+
+```bash
+python3 control/stub_server.py
+curl -s -X POST 'http://127.0.0.1:8765/v1/jobs?execute=true' \
+  -H 'Content-Type: application/json' \
+  -d '{"type":"export_peq","plugin_id":"filter-listen","params":{"fr":"testdata/synthetic_fr.csv","target":"harman_like","output":"/tmp/peq.json"}}' \
+  | python3 -m json.tool
+```
+
 OpenAPI 可用任意本地查看器打开 `openapi-stub.yaml`（例如 IDE 预览）；**不要**把本目录当成已发布 API。
 
 ## 安全边界（摘要）
@@ -80,7 +90,7 @@ OpenAPI 可用任意本地查看器打开 `openapi-stub.yaml`（例如 IDE 预�
 ## 约束
 
 - 禁止 `git push` / `gh repo create` / Origin create / 写入真密钥。
-- Stub 默认只解析 `resolved_entrypoint`，**不执行**子进程；结果只给路径与钉版回显，**不填虚构评测分数**。
+- Stub 默认只解析 `resolved_entrypoint`（dry-run）。`execute=true` 仅本地执行 `export_peq`（`generate_peq_from_fr.py`，默认 `--no-autoeq`）与 `pin_version`（`setup_pins.sh`，只打印 pin，不下载权重）。`run_eval` 的 `execute=true` 返回 400。结果只给退出码、输出摘要与路径，**不填虚构评测分数**。
 
 ## CI
 

@@ -26,3 +26,5 @@ jobs:
           grep -q 'run_eval' control/JOB_ENTRYPOINT_MAP.md
           grep -q 'export_peq' control/JOB_ENTRYPOINT_MAP.md
           grep -q 'pin_version' control/JOB_ENTRYPOINT_MAP.md
+          grep -q 'execute=true' control/JOB_ENTRYPOINT_MAP.md
+          grep -q 'execute_disabled' control/JOB_ENTRYPOINT_MAP.md
