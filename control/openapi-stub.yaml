@@ -1,0 +1,524 @@
+openapi: 3.0.3
+info:
+  title: Audio Algorithm Control Platform API (stub)
+  description: |
+    本地调控平台 OpenAPI stub。未推远程、无真密钥、无生产实现。
+    UI 已定 C（API + CLI 先行）。许可证纸面：Apache-2.0 + DCO。
+    目标仓纸面：lxrobertxiong-beep/robert_music（含 control/）；
+    评测仓纸面：lxrobertxiong-beep/audio-algo-eval。
+    任务类型：run_eval | export_peq | pin_version。
+    POST /v1/jobs 解析 create_job→入口映射，返回 resolved_entrypoint（默认 dry-run）。
+    映射见 JOB_ENTRYPOINT_MAP.md。
+  version: 0.1.0-local
+  contact:
+    name: local-draft
+
+servers:
+  - url: http://127.0.0.1:8765
+    description: 本地 stub（可选 stub_server.py）
+
+tags:
+  - name: plugins
+  - name: jobs
+  - name: devices
+
+paths:
+  /v1/plugins:
+    get:
+      tags: [plugins]
+      summary: List registered plugins
+      operationId: listPlugins
+      responses:
+        "200":
+          description: Plugin list from local registry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginList"
+              examples:
+                draft:
+                  value:
+                    schema_version: "0.1.0"
+                    plugins:
+                      - id: filter-listen
+                        display_name: AI 滤波 / 听感补偿（PEQ）
+                        task_bindings: [export_peq]
+                      - id: call-nr
+                        display_name: 通话降噪（评测侧入口；算法焊接 m1-call-nr）
+                        task_bindings: [run_eval, pin_version]
+
+  /v1/plugins/{id}:
+    get:
+      tags: [plugins]
+      summary: Get one plugin by id
+      operationId: getPlugin
+      parameters:
+        - $ref: "#/components/parameters/PluginId"
+      responses:
+        "200":
+          description: Plugin detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plugin"
+              examples:
+                filter_listen:
+                  value:
+                    id: filter-listen
+                    display_name: AI 滤波 / 听感补偿（PEQ）
+                    local_path: /workspace/oss-ai-filter-listen/
+                    license:
+                      spdx: Apache-2.0
+                    entrypoints:
+                      - name: generate_peq_from_fr
+                        kind: cli_script
+                        path: scripts/generate_peq_from_fr.py
+                      - name: apply_peq_wav
+                        kind: cli_script
+                        path: scripts/apply_peq_wav.py
+                      - name: export_metrics
+                        kind: cli_script
+                        path: scripts/export_metrics.py
+                    configs:
+                      - configs/peq_schema.json
+                      - configs/graph_48k_10ms.yaml
+                    task_bindings: [export_peq]
+                    graph:
+                      sample_rate_hz: 48000
+                      frame_ms: 10
+                call_nr:
+                  value:
+                    id: call-nr
+                    display_name: 通话降噪（评测侧入口；算法焊接 m1-call-nr）
+                    local_path: /workspace/m1-call-nr/
+                    eval_adapter:
+                      path: /workspace/call-nr-eval/
+                      entrypoint: scripts/run_vbd_eval.py
+                    entrypoints:
+                      - name: run_vbd_eval
+                        kind: cli_script
+                        path: scripts/run_vbd_eval.py
+                        args_hint: "--baseline none|rnnoise|deepfilternet"
+                    pins:
+                      - name: RNNoise
+                        version: v0.2
+                        report_name: RNNoise@v0.2
+                      - name: DeepFilterNet3
+                        version: v0.5.6
+                        report_name: DeepFilterNet3@v0.5.6
+                    env_examples:
+                      RNNOISE_ROOT: /workspace/m1-call-nr/third_party/rnnoise
+                    task_bindings: [run_eval, pin_version]
+                    admission_claim: false
+        "404":
+          description: Unknown plugin id
+
+  /v1/jobs:
+    post:
+      tags: [jobs]
+      summary: Create a control job (resolve entrypoint; dry-run default)
+      operationId: createJob
+      parameters:
+        - name: execute
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: |
+            false/omit = dry-run resolve only (default).
+            true = refused by stub (no subprocess).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobRequest"
+            examples:
+              run_eval:
+                value:
+                  type: run_eval
+                  plugin_id: call-nr
+                  params:
+                    baseline: rnnoise
+              export_peq:
+                value:
+                  type: export_peq
+                  plugin_id: filter-listen
+                  params:
+                    fr: testdata/synthetic_fr.csv
+                    target: harman_like
+                    output: /tmp/peq.json
+              pin_version:
+                value:
+                  type: pin_version
+                  plugin_id: call-nr
+                  params:
+                    pins: [RNNoise@v0.2, DeepFilterNet3@v0.5.6]
+      responses:
+        "201":
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+              examples:
+                export_peq_dry_run:
+                  value:
+                    id: job_01HZXAMPLE
+                    type: export_peq
+                    plugin_id: filter-listen
+                    status: queued
+                    created_at: "2026-11-02T14:30:00+08:00"
+                    params:
+                      fr: testdata/synthetic_fr.csv
+                      target: harman_like
+                      output: /tmp/peq.json
+                    resolved_entrypoint:
+                      workdir: /workspace/oss-ai-filter-listen
+                      command:
+                        - python3
+                        - scripts/generate_peq_from_fr.py
+                        - --fr
+                        - testdata/synthetic_fr.csv
+                        - --target
+                        - harman_like
+                        - -o
+                        - /tmp/peq.json
+                      command_template: "python3 scripts/generate_peq_from_fr.py --fr testdata/synthetic_fr.csv --target harman_like -o /tmp/peq.json"
+                      dry_run: true
+                      follow_on:
+                        - name: apply_peq_wav
+                          script: scripts/apply_peq_wav.py
+                    result: null
+                    note: stub dry-run — resolved entrypoint only; does not execute plugins
+                run_eval_dry_run:
+                  value:
+                    id: job_01HZRUNEV
+                    type: run_eval
+                    plugin_id: call-nr
+                    status: queued
+                    created_at: "2026-11-02T14:30:00+08:00"
+                    params:
+                      baseline: rnnoise
+                    resolved_entrypoint:
+                      workdir: /workspace/call-nr-eval
+                      command:
+                        - python3
+                        - scripts/run_vbd_eval.py
+                        - --baseline
+                        - rnnoise
+                      command_template: "python3 scripts/run_vbd_eval.py --baseline rnnoise"
+                      dry_run: true
+                      algo_weld: /workspace/m1-call-nr
+                      follow_on: []
+                    result: null
+        "400":
+          description: Invalid type, plugin binding, or execute=true (disabled)
+
+  /v1/jobs/{id}:
+    get:
+      tags: [jobs]
+      summary: Get job status and result pointers
+      operationId: getJob
+      parameters:
+        - $ref: "#/components/parameters/JobId"
+      responses:
+        "200":
+          description: Job status; result holds paths only (no fabricated scores)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+              examples:
+                succeeded:
+                  value:
+                    id: job_01HZXAMPLE
+                    type: run_eval
+                    plugin_id: call-nr
+                    status: succeeded
+                    created_at: "2026-11-02T14:25:00+08:00"
+                    finished_at: "2026-11-02T14:26:00+08:00"
+                    result:
+                      exit_code: 0
+                      log_path: /workspace/call-nr-eval/results/last_run.log
+                      artifact_paths:
+                        - /workspace/call-nr-eval/results/summary_rnnoise.json
+                      pin_echo:
+                        - RNNoise@v0.2
+        "404":
+          description: Unknown job id
+
+  /v1/devices/{id}:
+    get:
+      tags: [devices]
+      summary: Device or pin-target stub (local draft)
+      description: |
+        占位：设备或钉版目标查询。正式设备面未实现；
+        可返回与 pin_version 相关的本地目标元数据。
+      operationId: getDevice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Device or pin-target id (stub)
+      responses:
+        "200":
+          description: Device/pin stub
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Device"
+              examples:
+                pin_target:
+                  value:
+                    id: call-nr-baselines
+                    kind: pin_target
+                    plugin_id: call-nr
+                    pins:
+                      - RNNoise@v0.2
+                      - DeepFilterNet3@v0.5.6
+                    note: 本地草案；无真实设备会话
+        "404":
+          description: Unknown device id
+
+components:
+  parameters:
+    PluginId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [filter-listen, call-nr]
+      description: Plugin id from registry
+    JobId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    TaskType:
+      type: string
+      enum:
+        - run_eval
+        - export_peq
+        - pin_version
+
+    JobStatus:
+      type: string
+      enum: [queued, running, succeeded, failed, cancelled]
+
+    PluginList:
+      type: object
+      required: [plugins]
+      properties:
+        schema_version:
+          type: string
+          example: "0.1.0"
+        plugins:
+          type: array
+          items:
+            $ref: "#/components/schemas/PluginSummary"
+
+    PluginSummary:
+      type: object
+      required: [id, display_name]
+      properties:
+        id:
+          type: string
+          example: filter-listen
+        display_name:
+          type: string
+        task_bindings:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskType"
+
+    Plugin:
+      type: object
+      required: [id, display_name, task_bindings]
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        local_path:
+          type: string
+        algo_weld_path:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [public_candidate, restricted, private]
+        license:
+          type: object
+          properties:
+            spdx:
+              type: string
+            notes:
+              type: string
+        pins:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        entrypoints:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              kind:
+                type: string
+              path:
+                type: string
+              args_hint:
+                type: string
+        configs:
+          type: array
+          items:
+            type: string
+        graph:
+          type: object
+          additionalProperties: true
+        env_examples:
+          type: object
+          additionalProperties:
+            type: string
+        task_bindings:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskType"
+        admission_claim:
+          type: boolean
+          default: false
+        security:
+          type: object
+          properties:
+            forbid_paths:
+              type: array
+              items:
+                type: string
+              example: [jieli-sdk-drop, "*.key", private/jieli]
+
+    CreateJobRequest:
+      type: object
+      required: [type, plugin_id]
+      properties:
+        type:
+          $ref: "#/components/schemas/TaskType"
+        plugin_id:
+          type: string
+          enum: [filter-listen, call-nr]
+        params:
+          type: object
+          additionalProperties: true
+          description: Plugin-specific params; stub does not invent metrics
+
+    JobResult:
+      type: object
+      nullable: true
+      properties:
+        exit_code:
+          type: integer
+        log_path:
+          type: string
+        artifact_paths:
+          type: array
+          items:
+            type: string
+        pin_echo:
+          type: array
+          items:
+            type: string
+      description: 路径与钉版回显 only；禁止填未实测 MOS/SDR
+
+    ResolvedEntrypoint:
+      type: object
+      required: [workdir, command, command_template, dry_run]
+      properties:
+        workdir:
+          type: string
+          description: Working directory for the CLI/script
+        command:
+          type: array
+          items:
+            type: string
+          description: Argv list (not executed in dry-run)
+        command_template:
+          type: string
+        dry_run:
+          type: boolean
+          default: true
+        algo_weld:
+          type: string
+          nullable: true
+          description: Algorithm tree path (e.g. m1-call-nr for run_eval)
+        follow_on:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        resolved_pins:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+          description: Present for pin_version jobs
+        requested_pins:
+          type: array
+          items:
+            type: string
+
+    Job:
+      type: object
+      required: [id, type, plugin_id, status]
+      properties:
+        id:
+          type: string
+        type:
+          $ref: "#/components/schemas/TaskType"
+        plugin_id:
+          type: string
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        created_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        params:
+          type: object
+          additionalProperties: true
+        resolved_entrypoint:
+          $ref: "#/components/schemas/ResolvedEntrypoint"
+        note:
+          type: string
+        result:
+          $ref: "#/components/schemas/JobResult"
+
+    Device:
+      type: object
+      required: [id, kind]
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          example: pin_target
+        plugin_id:
+          type: string
+        pins:
+          type: array
+          items:
+            type: string
+        note:
+          type: string

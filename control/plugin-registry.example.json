@@ -1,0 +1,122 @@
+{
+  "schema_version": "0.1.0",
+  "description": "Local example registry for audio-algo control platform. Target paper repos: lxrobertxiong-beep/robert_music (algo+control) and lxrobertxiong-beep/audio-algo-eval (eval). License Apache-2.0+DCO. Remote not created yet; paths are box-local. Do not invent metrics.",
+  "plugins": [
+    {
+      "id": "call-nr",
+      "display_name": "Call noise reduction (M1)",
+      "local_path": "/workspace/m1-call-nr",
+      "visibility": "public_candidate",
+      "license": {
+        "spdx": "Apache-2.0",
+        "notes": "Self-authored: Apache-2.0 + DCO. Third-party pins keep upstream licenses (RNNoise BSD-like / DeepFilterNet upstream). Remote paper target only; not pushed."
+      },
+      "pins": [
+        {
+          "name": "RNNoise",
+          "version": "v0.2",
+          "ref": "904a876dce1f9ab8860c0a5000ed151f9f6eef58"
+        },
+        {
+          "name": "DeepFilterNet3",
+          "version": "v0.5.6",
+          "ref": "deepfilternet==0.5.6 / 978576aa8400552a4ce9730838c635aa30db5e61"
+        }
+      ],
+      "entrypoints": [
+        {
+          "name": "run_rnnoise",
+          "kind": "cli_script",
+          "path": "scripts/run_rnnoise.sh",
+          "args_hint": "<in.wav> [out.wav]"
+        },
+        {
+          "name": "run_dfn3",
+          "kind": "cli_script",
+          "path": "scripts/run_dfn3.sh",
+          "args_hint": "<in.wav> [out_dir]"
+        },
+        {
+          "name": "setup_pins",
+          "kind": "cli_script",
+          "path": "scripts/setup_pins.sh",
+          "args_hint": "(no required args; clones/checks pins into third_party)"
+        }
+      ],
+      "task_bindings": [
+        "run_eval",
+        "pin_version"
+      ],
+      "eval_adapter": {
+        "path": "/workspace/call-nr-eval",
+        "entrypoint": "scripts/run_vbd_eval.py",
+        "args_hint": "--baseline none|rnnoise|deepfilternet [--config configs/default.yaml]",
+        "notes": "Admission thresholds unset; do not claim pass/board results. Target eval repo paper name audio-algo-eval (private/restricted).",
+        "repo": "lxrobertxiong-beep/audio-algo-eval",
+        "home": "https://github.com/lxrobertxiong-beep/audio-algo-eval"
+      },
+      "oss_boundary": {
+        "may_publish": true,
+        "never_bundle": [
+          "/home/box/private/jieli/",
+          "/workspace/jieli-sdk-drop/",
+          "**/DynamicEQPro.a",
+          "**/*.key",
+          "**/*.fw"
+        ]
+      },
+      "repo": "lxrobertxiong-beep/robert_music",
+      "home": "https://github.com/lxrobertxiong-beep/robert_music"
+    },
+    {
+      "id": "filter-listen",
+      "display_name": "AI filter / listen compensation (M2 PEQ)",
+      "local_path": "/workspace/oss-ai-filter-listen",
+      "visibility": "public_candidate",
+      "license": {
+        "spdx": "Apache-2.0",
+        "notes": "Self-authored Apache-2.0 + DCO. AutoEq optional MIT pip dep (do not vendor whole tree); openMHA reference-only (no AGPL vendoring). No Jieli binaries. Remote paper target only; not pushed."
+      },
+      "pins": [],
+      "entrypoints": [
+        {
+          "name": "generate_peq_from_fr",
+          "kind": "cli_script",
+          "path": "scripts/generate_peq_from_fr.py",
+          "args_hint": "--fr <fr.csv> [--target harman_like] [--no-autoeq] -o <peq.json>"
+        },
+        {
+          "name": "apply_peq_wav",
+          "kind": "cli_script",
+          "path": "scripts/apply_peq_wav.py",
+          "args_hint": "--wav <in.wav> --peq <peq.json> -o <out.wav>"
+        },
+        {
+          "name": "export_metrics",
+          "kind": "cli_script",
+          "path": "scripts/export_metrics.py",
+          "args_hint": "--wav <wav> --peq <json> -o <metrics.json>"
+        }
+      ],
+      "task_bindings": [
+        "export_peq"
+      ],
+      "eval_adapter": null,
+      "oss_boundary": {
+        "may_publish": true,
+        "never_bundle": [
+          "/home/box/private/jieli/",
+          "**/DynamicEQPro.a",
+          "**/*.key",
+          "**/*.fw"
+        ]
+      },
+      "configs": [
+        "configs/peq_schema.json",
+        "configs/graph_48k_10ms.yaml"
+      ],
+      "repo": "lxrobertxiong-beep/robert_music",
+      "home": "https://github.com/lxrobertxiong-beep/robert_music"
+    }
+  ]
+}
