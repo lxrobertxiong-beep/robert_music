@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 贡献指南
+    url: https://github.com/lxrobertxiong-beep/robert_music/blob/main/CONTRIBUTING.md
+    about: 提 Issue / PR 前请先阅读贡献指南。
+  - name: 行为准则
+    url: https://github.com/lxrobertxiong-beep/robert_music/blob/main/CODE_OF_CONDUCT.md
+    about: 参与社区前请了解行为期望与举报方式。
+  - name: 文档与发布说明
+    url: https://github.com/lxrobertxiong-beep/robert_music/blob/main/docs/
+    about: 架构、边界清单与版本发布说明等文档入口。
+  - name: 安全或私密反馈
+    url: https://github.com/lxrobertxiong-beep/robert_music/blob/main/SECURITY.md
+    about: 请勿在公开 Issue 中披露安全细节；优先阅读 SECURITY.md。

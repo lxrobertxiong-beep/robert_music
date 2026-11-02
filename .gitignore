@@ -1,0 +1,22 @@
+# 杰理 / 厂商私有
+**/jieli/sdk/
+**/private/jieli/
+**/*license*.key
+**/*.key
+**/*AC897N*earphone_release*
+**/LX-OWS01_73D8*
+**/*调音包*
+**/jieli-sdk-drop/
+**/*.fw
+**/AC697X_config_tool/
+**/default_cfg.fw
+
+# 构建与本地
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.DS_Store
+
+**/DynamicEQPro.a
+**/DynamicEQPro*
