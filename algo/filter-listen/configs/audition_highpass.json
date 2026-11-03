@@ -1,0 +1,12 @@
+{
+  "name": "audition_highpass",
+  "sample_rate": 48000,
+  "preamp_db": 0.0,
+  "bands": [
+    { "fc": 2000.0, "Q": 0.707, "gain": 0.0, "type": "highpass" }
+  ],
+  "meta": {
+    "target": "highpass",
+    "generator": "audition_preset"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "audition_lowpass",
+  "sample_rate": 48000,
+  "preamp_db": 0.0,
+  "bands": [
+    { "fc": 500.0, "Q": 0.707, "gain": 0.0, "type": "lowpass" }
+  ],
+  "meta": {
+    "target": "lowpass",
+    "generator": "audition_preset"
+  }
+}

@@ -48,6 +48,20 @@ pytest -q tests/test_filter_listen_peq.py tests/test_filter_listen_graph.py \
 
 或直接 `pytest -q`。
 
+## 桌面试听
+
+可选 Gradio 页面，不进 CI。上传 WAV 或填本机路径，在 `passthrough` / `lowpass` / `highpass` / `peaking` / `example_compensation` 里选一个，并排听原声和处理后的 WAV，并下载结果。处理走 `apply_peq_wav.py` 的同一条图（`AudioGraph` + PEQ JSON）。`passthrough` 是空 band，仍经过 soft limiter。limiter 是工程占位，**非听感定稿**。权重不入库，AutoEq 树不入库，不宣称评测准入。`configs/peq_schema.json` 未改。
+
+路径打不开或 WAV 读不了时，状态栏以 **exit 2** 开头。内置预设不依赖 AutoEq；若某个预设把 `meta.generator` 标成 `autoeq` 且未安装 AutoEq，状态栏以 **exit 3** 开头（不下载、不 vendor）。未安装 Gradio 时脚本在 stderr 提示安装并返回 1，不静默失败。
+
+```bash
+pip install -r algo/filter-listen/requirements-ui.txt
+python algo/filter-listen/scripts/audition_ui.py
+# → http://127.0.0.1:7860
+```
+
+浏览器打开本机地址（默认 <http://127.0.0.1:7860>）。
+
 ## 离线脚本（stdlib；AutoEq 缺失时用 `--no-autoeq`）
 
 工作目录可在仓库根。脚本参数使用你传入的路径。
@@ -89,9 +103,14 @@ python3 algo/filter-listen/scripts/generate_peq_from_fr.py \
 ## 目录
 
 ```
-configs/   graph_48k_10ms.yaml, peq_schema.json, example_compensation.json
+configs/   graph_48k_10ms.yaml, peq_schema.json, example_compensation.json,
+           audition_passthrough.json, audition_lowpass.json,
+           audition_highpass.json, audition_peaking.json
 docs/      architecture, demo, jieli_capability_map, m3_dependencies, eval_metrics_draft
-scripts/   run_demo.py, generate_peq_from_fr.py, apply_peq_wav.py, export_metrics.py
+scripts/   run_demo.py, generate_peq_from_fr.py, apply_peq_wav.py,
+           export_metrics.py, audition_ui.py
+audition.py  桌面试听辅助（无 Gradio 依赖）
+requirements-ui.txt  可选 Gradio；CI 不安装
 peq.py     可移植 biquad cascade
 graph.py   48 kHz / 10 ms 图（limiter 为非听感定稿 stub）
 testdata/  synthetic_fr.csv, silence_0p5s.wav, sine_1k_0p5s.wav
