@@ -1,0 +1,10 @@
+{
+  "name": "audition_passthrough",
+  "sample_rate": 48000,
+  "preamp_db": 0.0,
+  "bands": [],
+  "meta": {
+    "target": "passthrough",
+    "generator": "audition_preset"
+  }
+}

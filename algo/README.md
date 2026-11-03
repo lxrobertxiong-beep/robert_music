@@ -2,5 +2,5 @@
 
 自研算法插件目录。P1：`call-nr`、`filter-listen`。
 
-- `filter-listen/`：AI 滤波 / 试听补偿骨架（48 kHz / 480 samples，Apache-2.0）。`peq_schema` 在 `filter-listen/configs/peq_schema.json`。Python 导入桥：`algo.filter_listen`。
+- `filter-listen/`：AI 滤波 / 试听补偿骨架（48 kHz / 480 samples，Apache-2.0）。`peq_schema` 在 `filter-listen/configs/peq_schema.json`。Python 导入桥：`algo.filter_listen`。可选桌面 Gradio 试听见该目录 README（`requirements-ui.txt`，不进 CI；不宣称评测准入）。
 - `call-nr/`：通话降噪公开骨架（契约 A，48 kHz / 480；identity 推理可跑；RNNoise / DeepFilterNet3 / GTCRN / Silero VAD 为可选钉版，权重不入库，不宣称评测准入）。缺权重或未装 torch 时退出码 3，见 [`call-nr/README.md`](call-nr/README.md) 与 `call-nr/scripts/smoke_missing_weights.sh`。

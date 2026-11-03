@@ -20,8 +20,9 @@ jobs:
       - name: Install libsndfile for soundfile
         run: sudo apt-get update && sudo apt-get install -y libsndfile1
       - name: Install pytest and call-nr runtime deps
-        # Identity + contract A only. Do not pip-install torch, gradio, or
-        # algo/call-nr/requirements-ui.txt, and do not download weights.
+        # Identity + contract A only. Do not pip-install torch, gradio,
+        # algo/call-nr/requirements-ui.txt, or
+        # algo/filter-listen/requirements-ui.txt, and do not download weights.
         run: |
           pip install -r requirements-dev.txt
           pip install -r algo/call-nr/requirements.txt

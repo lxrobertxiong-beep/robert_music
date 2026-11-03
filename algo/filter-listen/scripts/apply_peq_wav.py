@@ -64,9 +64,41 @@ def write_wav_mono(path: Path, samples: list[float], sample_rate: int) -> None:
         handle.writeframes(pcm.tobytes())
 
 
-def main(argv=None) -> int:
+def apply_peq_document(
+    samples: list[float],
+    src_sr: int,
+    peq_doc: dict,
+    *,
+    sample_rate: int = 48000,
+    frame: int = 480,
+    limiter: bool = True,
+) -> tuple[list[float], int]:
+    """Apply one PortablePEQ document with the frame-aware graph.
+
+    Same steps as the CLI: preamp, optional resample to ``sample_rate``,
+    PEQ cascade in frames of ``frame``, then the soft limiter stub
+    (非听感定稿) unless ``limiter`` is false. Returns samples and the
+    number of biquad sections actually built.
+    """
     from graph import AudioGraph, GraphConfig
 
+    cfg = GraphConfig(
+        sample_rate=sample_rate,
+        frame_samples=frame,
+        latency_budget_ms=1000.0 * frame / sample_rate,
+        limiter_threshold=0.98 if limiter else 1e9,
+        peq=peq_doc,
+    )
+    graph = AudioGraph(config=cfg)
+    preamp_db = float(peq_doc.get("preamp_db", 0.0))
+    gain = 10.0 ** (preamp_db / 20.0)
+    scaled = [sample * gain for sample in samples]
+    rendered = graph.process_buffer(scaled, src_sr=src_sr)
+    n_bands = 0 if graph.peq is None else len(graph.peq.filters)
+    return rendered, n_bands
+
+
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Apply portable PEQ JSON to WAV (48k frame-aware).")
     parser.add_argument("--wav", type=Path, required=True)
     parser.add_argument("--peq", type=Path, required=True, help="PEQ JSON (peq_schema)")
@@ -78,21 +110,15 @@ def main(argv=None) -> int:
 
     mono, src_sr = read_wav_mono(args.wav)
     peq_doc = json.loads(args.peq.read_text(encoding="utf-8"))
-    cfg = GraphConfig(
+    output, n_bands = apply_peq_document(
+        mono,
+        src_sr,
+        peq_doc,
         sample_rate=args.sample_rate,
-        frame_samples=args.frame,
-        latency_budget_ms=1000.0 * args.frame / args.sample_rate,
-        limiter_threshold=0.98 if not args.no_limiter else 1e9,
-        peq=peq_doc,
+        frame=args.frame,
+        limiter=not args.no_limiter,
     )
-    graph = AudioGraph(config=cfg)
-    preamp_db = float(peq_doc.get("preamp_db", 0.0))
-    gain = 10.0 ** (preamp_db / 20.0)
-    mono = [sample * gain for sample in mono]
-
-    output = graph.process_buffer(mono, src_sr=src_sr)
     write_wav_mono(args.output, output, args.sample_rate)
-    n_bands = 0 if graph.peq is None else len(graph.peq.filters)
     print(
         f"wrote {args.output} sr={args.sample_rate} frame={args.frame} "
         f"in_sr={src_sr} n={len(output)} peq_bands={n_bands}"
